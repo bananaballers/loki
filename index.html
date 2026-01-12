@@ -185,9 +185,9 @@
                 }
             }
 
-            collectibles.forEach(c => ctx.drawImage(assets[c.type], c.x * TILE_SIZE, c.y * TILE_SIZE));
-            enemies.forEach(e => ctx.drawImage(assets.enemy, e.x * TILE_SIZE, e.y * TILE_SIZE));
-            ctx.drawImage(assets.hero, player.x * TILE_SIZE, player.y * TILE_SIZE);
+            collectibles.forEach(c => ctx.drawImage(assets[c.type], c.x * TILE_SIZE, c.y * TILE_SIZE, TILE_SIZE, TILE_SIZE));
+            enemies.forEach(e => ctx.drawImage(assets.enemy, e.x * TILE_SIZE, e.y * TILE_SIZE, TILE_SIZE, TILE_SIZE));
+            ctx.drawImage(assets.hero, player.x * TILE_SIZE, player.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
             
             // Update HUD
             document.getElementById('level-text').textContent = `Level: ${level}`;
