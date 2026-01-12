@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dungeon Crawler</title>
+    <style>
+        body {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #E91E63;
+            text-shadow: 0 0 5px #E91E63;
+        }
+        canvas {
+            background-color: #333;
+            border: 5px solid #673AB7;
+            box-shadow: 0 0 15px #673AB7;
+            margin-bottom: 15px;
+        }
+        #hud {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #03A9F4;
+        }
+        #hud span {
+            margin: 0 10px;
+        }
+        .instructions {
+            color: #9E9E9E;
+        }
+        /* This hides the images used for preloading */
+        .preload {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Dungeon Crawler</h1>
+    <p class="instructions">Use WASD to move. Find the weapon (W), then press '1' to fight enemies (E).</p>
+    
+    <div id="hud">
+        <span id="level-text">Level: 1</span>
+        <span id="health-text">Health: 100</span>
+        <span id="coin-text">Coins: 0</span>
+        <span id="weapon-text">Weapon: No</span>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- Image assets for preloading -->
+    <div class="preload">
+        <img id="hero-img" src="https://github.com/coder11v/dungeoncrawler/blob/main/hero.png?raw=true" alt="hero">
+        <img id="enemy-img" src="https://github.com/coder11v/dungeoncrawler/blob/main/enemy.png?raw=true" alt="enemy">
+        <img id="coin-img" src="https://github.com/coder11v/dungeoncrawler/blob/main/coin.png?raw=true" alt="coin">
+        <img id="weapon-img" src="https://github.com/coder11v/dungeoncrawler/blob/main/sword.png?raw=true" alt="weapon">
+    </div>
+
+    <script>
+        // --- GAME SETUP & CONFIG ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        const TILE_SIZE = 40; // Size of each tile in pixels
+        const wallChar = '#';
+        const floorChar = ' ';
+        const exitChar = '>';
+
+        const WALL_COLOR = '#424242'; // Dark grey for walls
+        const FLOOR_COLOR = '#212121'; // Even darker for floor
+
+        // --- ASSET MANAGEMENT ---
+        const assets = {
+            hero: document.getElementById('hero-img'),
+            enemy: document.getElementById('enemy-img'),
+            coin: document.getElementById('coin-img'),
+            weapon: document.getElementById('weapon-img')
+        };
+
+        // --- GAME STATE ---
+        let level = 1;
+        let map = [];
+        let player = {};
+        let enemies = [];
+        let collectibles = [];
+        let mazeWidth, mazeHeight;
+        let isGameOver = false;
+
+        // --- MAZE GENERATION (Prim's Algorithm) ---
+        function generateMaze(width, height) {
+            width = width % 2 === 0 ? width + 1 : width;
+            height = height % 2 === 0 ? height + 1 : height;
+            mazeWidth = width;
+            mazeHeight = height;
+
+            let maze = Array(height).fill(null).map(() => Array(width).fill(wallChar));
+            let startX = 1, startY = 1;
+            maze[startY][startX] = floorChar;
+            let walls = [];
+            walls.push({x: startX + 1, y: startY, fromX: startX, fromY: startY});
+            walls.push({x: startX - 1, y: startY, fromX: startX, fromY: startY});
+            walls.push({x: startX, y: startY + 1, fromX: startX, fromY: startY});
+            walls.push({x: startX, y: startY - 1, fromX: startX, fromY: startY});
+
+            while (walls.length > 0) {
+                let wallIndex = Math.floor(Math.random() * walls.length);
+                let wall = walls[wallIndex];
+                let oppositeX = wall.x + (wall.x - wall.fromX);
+                let oppositeY = wall.y + (wall.y - wall.fromY);
+                if (oppositeY > 0 && oppositeY < height - 1 && oppositeX > 0 && oppositeX < width - 1 && maze[oppositeY][oppositeX] === wallChar) {
+                    maze[wall.y][wall.x] = floorChar;
+                    maze[oppositeY][oppositeX] = floorChar;
+                    if (oppositeY > 1) walls.push({ x: oppositeX, y: oppositeY - 1, fromX: oppositeX, fromY: oppositeY });
+                    if (oppositeY < height - 2) walls.push({ x: oppositeX, y: oppositeY + 1, fromX: oppositeX, fromY: oppositeY });
+                    if (oppositeX > 1) walls.push({ x: oppositeX - 1, y: oppositeY, fromX: oppositeX, fromY: oppositeY });
+                    if (oppositeX < width - 2) walls.push({ x: oppositeX + 1, y: oppositeY, fromX: oppositeX, fromY: oppositeY });
+                }
+                walls.splice(wallIndex, 1);
+            }
+            maze[height - 2][width - 2] = exitChar;
+            return maze.map(row => row.join(''));
+        }
+
+        // --- ENTITY PLACEMENT ---
+        function populateMaze() {
+            enemies = [];
+            collectibles = [];
+            let emptyTiles = [];
+            for (let y = 0; y < mazeHeight; y++) {
+                for (let x = 0; x < mazeWidth; x++) {
+                    if (map[y][x] === floorChar && !(x === 1 && y === 1)) {
+                        emptyTiles.push({x, y});
+                    }
+                }
+            }
+            emptyTiles.sort(() => Math.random() - 0.5);
+
+            const enemyCount = 1 + level;
+            for (let i = 0; i < enemyCount && emptyTiles.length > 0; i++) {
+                const pos = emptyTiles.pop();
+                enemies.push({ x: pos.x, y: pos.y, health: 100, damage: 10 + level });
+            }
+
+            const coinCount = 3 + level;
+            for (let i = 0; i < coinCount && emptyTiles.length > 0; i++) {
+                const pos = emptyTiles.pop();
+                collectibles.push({ x: pos.x, y: pos.y, type: 'coin' });
+            }
+
+            if (emptyTiles.length > 0) {
+                const pos = emptyTiles.pop();
+                collectibles.push({ x: pos.x, y: pos.y, type: 'weapon' });
+            }
+        }
+
+        // --- RENDER & UI ---
+        function render() {
+            canvas.width = mazeWidth * TILE_SIZE;
+            canvas.height = mazeHeight * TILE_SIZE;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            for (let y = 0; y < map.length; y++) {
+                for (let x = 0; x < map[y].length; x++) {
+                    const tileX = x * TILE_SIZE;
+                    const tileY = y * TILE_SIZE;
+                    if (map[y][x] === wallChar) {
+                        ctx.fillStyle = WALL_COLOR;
+                        ctx.fillRect(tileX, tileY, TILE_SIZE, TILE_SIZE);
+                    } else {
+                        ctx.fillStyle = FLOOR_COLOR;
+                        ctx.fillRect(tileX, tileY, TILE_SIZE, TILE_SIZE);
+                        if(map[y][x] === exitChar) {
+                            ctx.fillStyle = '#FFD700';
+                            ctx.font = `${TILE_SIZE * 0.8}px sans-serif`;
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.fillText('>', tileX + TILE_SIZE / 2, tileY + TILE_SIZE / 2);
+                        }
+                    }
+                }
+            }
+
+            collectibles.forEach(c => ctx.drawImage(assets[c.type], c.x * TILE_SIZE, c.y * TILE_SIZE));
+            enemies.forEach(e => ctx.drawImage(assets.enemy, e.x * TILE_SIZE, e.y * TILE_SIZE));
+            ctx.drawImage(assets.hero, player.x * TILE_SIZE, player.y * TILE_SIZE);
+            
+            // Update HUD
+            document.getElementById('level-text').textContent = `Level: ${level}`;
+            document.getElementById('health-text').textContent = `Health: ${player.health}`;
+            document.getElementById('coin-text').textContent = `Coins: ${player.coins}`;
+            let weaponText = 'Weapon: No';
+            if (player.hasWeapon) {
+                weaponText = `Weapon: ${player.weaponDurability}`;
+            }
+            document.getElementById('weapon-text').textContent = weaponText;
+        }
+
+        // --- ENEMY AI ---
+        function processEnemyTurns() {
+            enemies.forEach(enemy => {
+                const dx = Math.abs(player.x - enemy.x);
+                const dy = Math.abs(player.y - enemy.y);
+
+                // If adjacent to player, ATTACK
+                if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
+                    player.health -= enemy.damage;
+                    return; // End turn after attacking
+                }
+
+                // Otherwise, move randomly
+                const move = Math.floor(Math.random() * 5);
+                let newX = enemy.x;
+                let newY = enemy.y;
+
+                if (move === 1) newY--; else if (move === 2) newY++;
+                else if (move === 3) newX--; else if (move === 4) newX++;
+
+                const isWall = map[newY][newX] === wallChar;
+                const isPlayer = newX === player.x && newY === player.y;
+                const isOtherEnemy = enemies.some(e => e !== enemy && e.x === newX && e.y === newY);
+
+                if (!isWall && !isPlayer && !isOtherEnemy) {
+                    enemy.x = newX;
+                    enemy.y = newY;
+                }
+            });
+        }
+
+        // --- GAME CONTROL ---
+        function startLevel() {
+            isGameOver = false;
+            const width = 15 + (level * 2);
+            const height = 9 + (level * 2);
+
+            // Preserve stats between levels, but reset position and weapon
+            player = { 
+                x: 1, y: 1, 
+                health: player.health || 100,
+                coins: player.coins || 0, 
+                hasWeapon: false,
+                weaponDurability: 0
+            };
+
+            map = generateMaze(width, height);
+            populateMaze();
+            render();
+        }
+
+        document.addEventListener('keydown', function(event) {
+            if (isGameOver) return;
+
+            let newX = player.x;
+            let newY = player.y;
+            let playerAction = false;
+
+            switch (event.key.toLowerCase()) {
+                case 'w': newY--; playerAction = true; break;
+                case 's': newY++; playerAction = true; break;
+                case 'a': newX--; playerAction = true; break;
+                case 'd': newX++; playerAction = true; break;
+                case '1': // Combat
+                    if (player.hasWeapon && player.weaponDurability > 0) {
+                        let attacked = false;
+                        for (let i = enemies.length - 1; i >= 0; i--) {
+                            const enemy = enemies[i];
+                            const dx = Math.abs(player.x - enemy.x);
+                            const dy = Math.abs(player.y - enemy.y);
+                            if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
+                                enemy.health -= 50;
+                                if (enemy.health <= 0) enemies.splice(i, 1);
+                                attacked = true;
+                            }
+                        }
+                        if (attacked) {
+                            player.weaponDurability--;
+                            if (player.weaponDurability <= 0) player.hasWeapon = false;
+                            playerAction = true;
+                        }
+                    }
+                    break;
+                default: return;
+            }
+            event.preventDefault();
+
+            if (map[newY] && map[newY][newX] !== wallChar) {
+                player.x = newX;
+                player.y = newY;
+            }
+
+            collectibles.forEach((c, index) => {
+                if (player.x === c.x && player.y === c.y) {
+                    if (c.type === 'coin') player.coins++;
+                    if (c.type === 'weapon') {
+                        player.hasWeapon = true;
+                        player.weaponDurability = 5 + level; // Weapon is stronger on higher levels
+                    }
+                    collectibles.splice(index, 1);
+                }
+            });
+
+            if (map[player.y][player.x] === exitChar) {
+                level++;
+                startLevel();
+                return;
+            }
+            
+            if (playerAction) {
+                processEnemyTurns();
+            }
+
+            if (player.health <= 0) {
+                player.health = 0;
+                isGameOver = true;
+                alert("Game Over! Your journey ends here. Refresh to try again.");
+            }
+
+            render();
+        });
+
+        window.onload = () => {
+            startLevel();
+        };
+    </script>
+
+</body>
+</html>
