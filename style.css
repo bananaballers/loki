@@ -1,0 +1,109 @@
+        :root {
+            --emerald: #004d26;
+            --gold: #d4af37;
+            --dark-gold: #aa8c2c;
+            --deep-black: #0a0a0a;
+            --glitch-green: #00ff41;
+        }
+
+        body {
+            background-color: var(--deep-black);
+            background-image: radial-gradient(circle at center, #1a2e1a 0%, #0a0a0a 100%);
+            color: #d4af37;
+            font-family: 'Cinzel', serif;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        h1 {
+            color: var(--gold);
+            font-size: 3em;
+            text-shadow: 0 0 10px rgba(212, 175, 55, 0.5), 0 0 20px rgba(0, 77, 38, 0.8);
+            margin-top: 10px;
+            letter-spacing: 5px;
+        }
+
+        .instructions {
+            color: #bdc3c7;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.2em;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+
+        canvas {
+            background-color: #0c140c;
+            border: 4px solid var(--gold);
+            box-shadow: 0 0 30px rgba(212, 175, 55, 0.3), inset 0 0 20px rgba(0, 77, 38, 0.5);
+            image-rendering: pixelated;
+            max-width: 95vw;
+        }
+
+        #hud {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            font-size: 1.2em;
+            margin-bottom: 20px;
+            background: rgba(0, 77, 38, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid var(--gold);
+            backdrop-filter: blur(5px);
+        }
+
+        .hud-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .hud-label {
+            font-size: 0.7em;
+            color: var(--dark-gold);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .hud-value {
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 0 5px var(--gold);
+        }
+
+        /* This hides the images used for preloading */
+        .preload {
+            display: none;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 0.8;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0.8;
+            }
+        }
+
+        #level-text {
+            animation: pulse 2s infinite;
+        }
+        
+            .center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.bordered-text {
+    border: 2px solid yellow; /* Shorthand for width, style, and color */
+    padding: 5px;          /* Adds space between the text and the border */
+    display: inline-block; /* Allows padding/margin to be applied correctly */
+}
