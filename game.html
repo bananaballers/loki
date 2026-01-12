@@ -1,78 +1,162 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <title>Dungeon Crawler</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loki: The Trickster's Trial</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@700&family=Cinzel:wght@400;700&display=swap"
+        rel="stylesheet">
     <style>
+        :root {
+            --emerald: #004d26;
+            --gold: #d4af37;
+            --dark-gold: #aa8c2c;
+            --deep-black: #0a0a0a;
+            --glitch-green: #00ff41;
+        }
+
         body {
-            background-color: #1a1a1a;
-            color: #e0e0e0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--deep-black);
+            background-image: radial-gradient(circle at center, #1a2e1a 0%, #0a0a0a 100%);
+            color: #d4af37;
+            font-family: 'Cinzel', serif;
             text-align: center;
             margin: 0;
             padding: 20px;
+            overflow-x: hidden;
         }
+
         h1 {
-            color: #E91E63;
-            text-shadow: 0 0 5px #E91E63;
+            color: var(--gold);
+            font-size: 3em;
+            text-shadow: 0 0 10px rgba(212, 175, 55, 0.5), 0 0 20px rgba(0, 77, 38, 0.8);
+            margin-top: 10px;
+            letter-spacing: 5px;
         }
-        canvas {
-            background-color: #333;
-            border: 5px solid #673AB7;
-            box-shadow: 0 0 15px #673AB7;
-            margin-bottom: 15px;
-        }
-        #hud {
-            font-size: 1.5em;
-            font-weight: bold;
-            color: #03A9F4;
-        }
-        #hud span {
-            margin: 0 10px;
-        }
+
         .instructions {
-            color: #9E9E9E;
+            color: #bdc3c7;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.2em;
+            margin-bottom: 20px;
+            font-style: italic;
         }
+
+        canvas {
+            background-color: #0c140c;
+            border: 4px solid var(--gold);
+            box-shadow: 0 0 30px rgba(212, 175, 55, 0.3), inset 0 0 20px rgba(0, 77, 38, 0.5);
+            image-rendering: pixelated;
+            max-width: 95vw;
+        }
+
+        #hud {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            font-size: 1.2em;
+            margin-bottom: 20px;
+            background: rgba(0, 77, 38, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid var(--gold);
+            backdrop-filter: blur(5px);
+        }
+
+        .hud-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .hud-label {
+            font-size: 0.7em;
+            color: var(--dark-gold);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .hud-value {
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 0 5px var(--gold);
+        }
+
         /* This hides the images used for preloading */
         .preload {
             display: none;
         }
+
+        @keyframes pulse {
+            0% {
+                opacity: 0.8;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0.8;
+            }
+        }
+
+        #level-text {
+            animation: pulse 2s infinite;
+        }
     </style>
 </head>
+
 <body>
 
-    <h1>Dungeon Crawler</h1>
-    <p class="instructions">Use WASD to move. Find the weapon (W), then press '1' to fight enemies (E).</p>
-    
+    <h1>LOKI</h1>
+    <p class="instructions">"Glorious purpose awaits." Use WASD to traverse the Nine Realms. Collect Runes and find your
+        Daggers to strike down the Frost Giants (1).</p>
+
     <div id="hud">
-        <span id="level-text">Level: 1</span>
-        <span id="health-text">Health: 100</span>
-        <span id="coin-text">Coins: 0</span>
-        <span id="weapon-text">Weapon: No</span>
+        <div class="hud-item">
+            <span class="hud-label">Realm Verse</span>
+            <span id="level-text" class="hud-value">1</span>
+        </div>
+        <div class="hud-item">
+            <span class="hud-label">Vitality</span>
+            <span id="health-text" class="hud-value">100</span>
+        </div>
+        <div class="hud-item">
+            <span class="hud-label">Asgardian Runes</span>
+            <span id="coin-text" class="hud-value">0</span>
+        </div>
+        <div class="hud-item">
+            <span class="hud-label">Relic</span>
+            <span id="weapon-text" class="hud-value">Unarmed</span>
+        </div>
     </div>
 
     <canvas id="gameCanvas"></canvas>
 
-    <!-- Image assets for preloading -->
+    <!-- Image assets -->
     <div class="preload">
-        <img id="hero-img" src="https://github.com/coder11v/dungeoncrawler/blob/main/hero.png?raw=true" alt="hero">
-        <img id="enemy-img" src="https://github.com/coder11v/dungeoncrawler/blob/main/enemy.png?raw=true" alt="enemy">
-        <img id="coin-img" src="https://github.com/coder11v/dungeoncrawler/blob/main/coin.png?raw=true" alt="coin">
-        <img id="weapon-img" src="https://github.com/coder11v/dungeoncrawler/blob/main/sword.png?raw=true" alt="weapon">
+        <img id="hero-img" src="hero.png" alt="hero">
+        <img id="enemy-img" src="enemy.png" alt="enemy">
+        <img id="coin-img" src="coin.png" alt="coin">
+        <img id="weapon-img" src="sword.png" alt="weapon">
     </div>
 
     <script>
         // --- GAME SETUP & CONFIG ---
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        
-        const TILE_SIZE = 40; // Size of each tile in pixels
+
+        const TILE_SIZE = 48; // Increased size for more detail
         const wallChar = '#';
         const floorChar = ' ';
         const exitChar = '>';
 
-        const WALL_COLOR = '#424242'; // Dark grey for walls
-        const FLOOR_COLOR = '#212121'; // Even darker for floor
+        const WALL_COLOR = '#0a210f'; // Deep jungle green
+        const FLOOR_COLOR = '#051208'; // Almost black green
+        const RUNE_GLOW = '#d4af37';
 
         // --- ASSET MANAGEMENT ---
         const assets = {
@@ -102,10 +186,10 @@
             let startX = 1, startY = 1;
             maze[startY][startX] = floorChar;
             let walls = [];
-            walls.push({x: startX + 1, y: startY, fromX: startX, fromY: startY});
-            walls.push({x: startX - 1, y: startY, fromX: startX, fromY: startY});
-            walls.push({x: startX, y: startY + 1, fromX: startX, fromY: startY});
-            walls.push({x: startX, y: startY - 1, fromX: startX, fromY: startY});
+            walls.push({ x: startX + 1, y: startY, fromX: startX, fromY: startY });
+            walls.push({ x: startX - 1, y: startY, fromX: startX, fromY: startY });
+            walls.push({ x: startX, y: startY + 1, fromX: startX, fromY: startY });
+            walls.push({ x: startX, y: startY - 1, fromX: startX, fromY: startY });
 
             while (walls.length > 0) {
                 let wallIndex = Math.floor(Math.random() * walls.length);
@@ -134,7 +218,7 @@
             for (let y = 0; y < mazeHeight; y++) {
                 for (let x = 0; x < mazeWidth; x++) {
                     if (map[y][x] === floorChar && !(x === 1 && y === 1)) {
-                        emptyTiles.push({x, y});
+                        emptyTiles.push({ x, y });
                     }
                 }
             }
@@ -164,6 +248,7 @@
             canvas.height = mazeHeight * TILE_SIZE;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+            // Draw Map
             for (let y = 0; y < map.length; y++) {
                 for (let x = 0; x < map[y].length; x++) {
                     const tileX = x * TILE_SIZE;
@@ -171,31 +256,38 @@
                     if (map[y][x] === wallChar) {
                         ctx.fillStyle = WALL_COLOR;
                         ctx.fillRect(tileX, tileY, TILE_SIZE, TILE_SIZE);
+                        // Add some "stone" detail
+                        ctx.strokeStyle = '#0e2e15';
+                        ctx.strokeRect(tileX + 4, tileY + 4, TILE_SIZE - 8, TILE_SIZE - 8);
                     } else {
                         ctx.fillStyle = FLOOR_COLOR;
                         ctx.fillRect(tileX, tileY, TILE_SIZE, TILE_SIZE);
-                        if(map[y][x] === exitChar) {
-                            ctx.fillStyle = '#FFD700';
-                            ctx.font = `${TILE_SIZE * 0.8}px sans-serif`;
+                        if (map[y][x] === exitChar) {
+                            ctx.fillStyle = '#C0C0C0';
+                            ctx.font = `bold ${TILE_SIZE * 0.8}px 'Cinzel'`;
                             ctx.textAlign = 'center';
                             ctx.textBaseline = 'middle';
-                            ctx.fillText('>', tileX + TILE_SIZE / 2, tileY + TILE_SIZE / 2);
+                            ctx.shadowBlur = 10;
+                            ctx.shadowColor = '#00ff41';
+                            ctx.fillText('Ω', tileX + TILE_SIZE / 2, tileY + TILE_SIZE / 2);
+                            ctx.shadowBlur = 0;
                         }
                     }
                 }
             }
 
+            // Draw Assets
             collectibles.forEach(c => ctx.drawImage(assets[c.type], c.x * TILE_SIZE, c.y * TILE_SIZE, TILE_SIZE, TILE_SIZE));
             enemies.forEach(e => ctx.drawImage(assets.enemy, e.x * TILE_SIZE, e.y * TILE_SIZE, TILE_SIZE, TILE_SIZE));
             ctx.drawImage(assets.hero, player.x * TILE_SIZE, player.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-            
+
             // Update HUD
-            document.getElementById('level-text').textContent = `Level: ${level}`;
-            document.getElementById('health-text').textContent = `Health: ${player.health}`;
-            document.getElementById('coin-text').textContent = `Coins: ${player.coins}`;
-            let weaponText = 'Weapon: No';
+            document.getElementById('level-text').textContent = level;
+            document.getElementById('health-text').textContent = player.health;
+            document.getElementById('coin-text').textContent = player.coins;
+            let weaponText = 'Unarmed';
             if (player.hasWeapon) {
-                weaponText = `Weapon: ${player.weaponDurability}`;
+                weaponText = `Twin Daggers (${player.weaponDurability})`;
             }
             document.getElementById('weapon-text').textContent = weaponText;
         }
@@ -206,13 +298,11 @@
                 const dx = Math.abs(player.x - enemy.x);
                 const dy = Math.abs(player.y - enemy.y);
 
-                // If adjacent to player, ATTACK
                 if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
                     player.health -= enemy.damage;
-                    return; // End turn after attacking
+                    return;
                 }
 
-                // Otherwise, move randomly
                 const move = Math.floor(Math.random() * 5);
                 let newX = enemy.x;
                 let newY = enemy.y;
@@ -220,11 +310,11 @@
                 if (move === 1) newY--; else if (move === 2) newY++;
                 else if (move === 3) newX--; else if (move === 4) newX++;
 
-                const isWall = map[newY][newX] === wallChar;
+                const isWall = map[newY] && map[newY][newX] === wallChar;
                 const isPlayer = newX === player.x && newY === player.y;
                 const isOtherEnemy = enemies.some(e => e !== enemy && e.x === newX && e.y === newY);
 
-                if (!isWall && !isPlayer && !isOtherEnemy) {
+                if (map[newY] && !isWall && !isPlayer && !isOtherEnemy) {
                     enemy.x = newX;
                     enemy.y = newY;
                 }
@@ -234,16 +324,15 @@
         // --- GAME CONTROL ---
         function startLevel() {
             isGameOver = false;
-            const width = 15 + (level * 2);
+            const width = 13 + (level * 2);
             const height = 9 + (level * 2);
 
-            // Preserve stats between levels, but reset position and weapon
-            player = { 
-                x: 1, y: 1, 
+            player = {
+                x: 1, y: 1,
                 health: player.health || 100,
-                coins: player.coins || 0, 
-                hasWeapon: false,
-                weaponDurability: 0
+                coins: player.coins || 0,
+                hasWeapon: player.hasWeapon || false,
+                weaponDurability: player.weaponDurability || 0
             };
 
             map = generateMaze(width, height);
@@ -251,7 +340,7 @@
             render();
         }
 
-        document.addEventListener('keydown', function(event) {
+        document.addEventListener('keydown', function (event) {
             if (isGameOver) return;
 
             let newX = player.x;
@@ -272,7 +361,10 @@
                             const dy = Math.abs(player.y - enemy.y);
                             if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
                                 enemy.health -= 50;
-                                if (enemy.health <= 0) enemies.splice(i, 1);
+                                if (enemy.health <= 0) {
+                                    enemies.splice(i, 1);
+                                    player.coins += 5; // Extra runes for defeating enemies
+                                }
                                 attacked = true;
                             }
                         }
@@ -297,7 +389,7 @@
                     if (c.type === 'coin') player.coins++;
                     if (c.type === 'weapon') {
                         player.hasWeapon = true;
-                        player.weaponDurability = 5 + level; // Weapon is stronger on higher levels
+                        player.weaponDurability = 10 + level;
                     }
                     collectibles.splice(index, 1);
                 }
@@ -308,7 +400,7 @@
                 startLevel();
                 return;
             }
-            
+
             if (playerAction) {
                 processEnemyTurns();
             }
@@ -316,7 +408,7 @@
             if (player.health <= 0) {
                 player.health = 0;
                 isGameOver = true;
-                alert("Game Over! Your journey ends here. Refresh to try again.");
+                alert("Your life force fades. Ragnarok has come for you. Refresh to reborn.");
             }
 
             render();
@@ -328,4 +420,5 @@
     </script>
 
 </body>
+
 </html>
