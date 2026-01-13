@@ -1,20 +1,8 @@
-<style>
-    
-    
-    .center-img {
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.bordered-text {
-    border: 2px solid yellow; /* Shorthand for width, style, and color */
-    padding: 5px;          /* Adds space between the text and the border */
-    display: inline-block; /* Allows padding/margin to be applied correctly */
-}
-
-
-</style>
+<!DOCTYPE html>
+<head>
+    <title>Loading...</title>
+    <link rel="stylesheet" href="styles.css">.
+</head>
 
 <body style="background-color:black;">
 <h1 style="color: yellow;">Loki Game </h2>
@@ -27,3 +15,49 @@
 </button>
 <h2 style="color: yellow;">Description:</h2>
 <p style="color: green; font size: 20px; text-align: center;" class="bordered-text"</p>this is a 2d adventure where you become loki and help fight off enimies and relive moments of loki's story </p>
+
+
+<script>
+  const titles = [
+    "Loki",
+    "Mischief!",
+    "Loki..."
+  ];
+
+  const typingSpeed = 120;   // ms per character
+  const deletingSpeed = 80;
+  const pauseAfterType = 1000;
+  const pauseAfterDelete = 400;
+
+  let titleIndex = 0;
+  let charIndex = 0;
+  let isDeleting = false;
+
+  function typeTitle() {
+    const current = titles[titleIndex];
+
+    if (!isDeleting) {
+      // Typing
+      charIndex++;
+      document.title = current.slice(0, charIndex);
+
+      if (charIndex === current.length) {
+        setTimeout(() => (isDeleting = true), pauseAfterType);
+      }
+    } else {
+      // Deleting
+      charIndex--;
+      document.title = current.slice(0, charIndex);
+
+      if (charIndex === 0) {
+        isDeleting = false;
+        titleIndex = (titleIndex + 1) % titles.length;
+        setTimeout(() => {}, pauseAfterDelete);
+      }
+    }
+
+    setTimeout(typeTitle, isDeleting ? deletingSpeed : typingSpeed);
+  }
+
+  typeTitle();
+</script>
