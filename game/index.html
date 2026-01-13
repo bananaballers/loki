@@ -15,7 +15,20 @@
 
     <h1>LOKI</h1>
     <p class="instructions">"Glorious purpose awaits." Use WASD to traverse the Nine Realms. Collect Runes and find your
-        Daggers to strike down the Frost Giants (1).</p>
+        Daggers to strike down enemies (1) or use Mischief (2) to confuse them.</p>
+
+    <div id="mischief-modal" class="modal">
+        <div class="modal-content">
+            <h2>Cast an Illusion</h2>
+            <p id="mischief-target-info"></p>
+            <textarea id="mischief-input" placeholder="Type how you will confuse this foe..."></textarea>
+            <div class="modal-buttons">
+                <button id="mischief-submit" onclick="submitMischief()">Deceive</button>
+                <button onclick="closeMischief()">Withdraw</button>
+            </div>
+            <div id="mischief-result" class="mischief-result"></div>
+        </div>
+    </div>
 
     <div id="hud">
         <div class="hud-item">
@@ -34,13 +47,22 @@
             <span class="hud-label">Relic</span>
             <span id="weapon-text" class="hud-value">Unarmed</span>
         </div>
+        <div class="hud-item">
+            <span class="hud-label">Mischief</span>
+            <span id="mischief-status" class="hud-value">Ready</span>
+        </div>
     </div>
 
     <canvas id="gameCanvas"></canvas>
 
     <!-- Image assets -->
     <div class="preload">
-        <img id="hero-img" src="hero.png" alt="hero">
+        <img id="hero-idle-weapon" src="hero/1.png" alt="hero idle weapon">
+        <img id="hero-idle-no-weapon" src="hero/2.png" alt="hero idle no weapon">
+        <img id="hero-run-1" src="hero/3.png" alt="hero run 1">
+        <img id="hero-run-2" src="hero/4.png" alt="hero run 2">
+        <img id="hero-run-3" src="hero/5.png" alt="hero run 3">
+        <img id="hero-run-4" src="hero/6.png" alt="hero run 4">
         <img id="enemy-img" src="enemy.png" alt="enemy">
         <img id="coin-img" src="coin.png" alt="coin">
         <img id="weapon-img" src="sword.png" alt="weapon">
@@ -62,7 +84,14 @@
 
         // --- ASSET MANAGEMENT ---
         const assets = {
-            hero: document.getElementById('hero-img'),
+            heroIdleWeapon: document.getElementById('hero-idle-weapon'),
+            heroIdleNoWeapon: document.getElementById('hero-idle-no-weapon'),
+            heroRun: [
+                document.getElementById('hero-run-1'),
+                document.getElementById('hero-run-2'),
+                document.getElementById('hero-run-3'),
+                document.getElementById('hero-run-4')
+            ],
             enemy: document.getElementById('enemy-img'),
             coin: document.getElementById('coin-img'),
             weapon: document.getElementById('weapon-img')
@@ -76,6 +105,11 @@
         let collectibles = [];
         let mazeWidth, mazeHeight;
         let isGameOver = false;
+
+        // Animation state
+        let heroAnimationFrame = 0;
+        let isMoving = false;
+        let moveAnimTimer = null;
 
         // --- MAZE GENERATION (Prim's Algorithm) ---
         function generateMaze(width, height) {
@@ -126,13 +160,23 @@
             }
             emptyTiles.sort(() => Math.random() - 0.5);
 
-            const enemyCount = 1 + level;
-            for (let i = 0; i < enemyCount && emptyTiles.length > 0; i++) {
+            // More enemies!
+            const baseEnemyCount = 2 + (level * 2);
+            for (let i = 0; i < baseEnemyCount && emptyTiles.length > 0; i++) {
                 const pos = emptyTiles.pop();
-                enemies.push({ x: pos.x, y: pos.y, health: 100, damage: 10 + level });
+                const enemyLevel = Math.floor(Math.random() * level) + level;
+                enemies.push({
+                    x: pos.x,
+                    y: pos.y,
+                    health: 50 + (enemyLevel * 10),
+                    damage: 5 + enemyLevel,
+                    level: enemyLevel,
+                    confused: false,
+                    id: Math.random().toString(36).substr(2, 9)
+                });
             }
 
-            const coinCount = 3 + level;
+            const coinCount = 5 + (level * 2);
             for (let i = 0; i < coinCount && emptyTiles.length > 0; i++) {
                 const pos = emptyTiles.pop();
                 collectibles.push({ x: pos.x, y: pos.y, type: 'coin' });
@@ -180,8 +224,32 @@
 
             // Draw Assets
             collectibles.forEach(c => ctx.drawImage(assets[c.type], c.x * TILE_SIZE, c.y * TILE_SIZE, TILE_SIZE, TILE_SIZE));
-            enemies.forEach(e => ctx.drawImage(assets.enemy, e.x * TILE_SIZE, e.y * TILE_SIZE, TILE_SIZE, TILE_SIZE));
-            ctx.drawImage(assets.hero, player.x * TILE_SIZE, player.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+            enemies.forEach(e => {
+                ctx.drawImage(assets.enemy, e.x * TILE_SIZE, e.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                // Health bar and level
+                ctx.fillStyle = "rgba(0,0,0,0.5)";
+                ctx.fillRect(e.x * TILE_SIZE, e.y * TILE_SIZE - 10, TILE_SIZE, 5);
+                ctx.fillStyle = e.confused ? "#00ff41" : "#ff0000";
+                ctx.fillRect(e.x * TILE_SIZE, e.y * TILE_SIZE - 10, (e.health / (50 + e.level * 10)) * TILE_SIZE, 5);
+
+                ctx.fillStyle = "white";
+                ctx.font = "10px Cinzel";
+                ctx.fillText(`Lvl ${e.level}`, e.x * TILE_SIZE, e.y * TILE_SIZE - 15);
+
+                if (e.confused) {
+                    ctx.fillStyle = "#00ff41";
+                    ctx.fillText("?", e.x * TILE_SIZE + TILE_SIZE / 2, e.y * TILE_SIZE + TILE_SIZE / 2);
+                }
+            });
+            // Draw Hero with Animation logic
+            let heroSprite;
+            if (isMoving) {
+                heroSprite = assets.heroRun[heroAnimationFrame];
+            } else {
+                heroSprite = player.hasWeapon ? assets.heroIdleWeapon : assets.heroIdleNoWeapon;
+            }
+            if (!heroSprite) heroSprite = assets.heroIdleNoWeapon; // Fallback
+            ctx.drawImage(heroSprite, player.x * TILE_SIZE, player.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
 
             // Update HUD
             document.getElementById('level-text').textContent = level;
@@ -192,16 +260,38 @@
                 weaponText = `Twin Daggers (${player.weaponDurability})`;
             }
             document.getElementById('weapon-text').textContent = weaponText;
+
+            const mischiefEl = document.getElementById('mischief-status');
+            mischiefEl.textContent = mischiefUsed ? "Exhausted" : "Ready";
+            if (mischiefUsed) {
+                mischiefEl.style.color = "#ff4141";
+                mischiefEl.classList.remove('ready-pulse');
+            } else {
+                mischiefEl.style.color = "#00ff41";
+                mischiefEl.classList.add('ready-pulse');
+            }
         }
 
         // --- ENEMY AI ---
         function processEnemyTurns() {
             enemies.forEach(enemy => {
+                if (enemy.confused) {
+                    // Confused enemies might skip turn or move randomly even more
+                    if (Math.random() > 0.5) return;
+                }
+
                 const dx = Math.abs(player.x - enemy.x);
                 const dy = Math.abs(player.y - enemy.y);
 
                 if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
-                    player.health -= enemy.damage;
+                    if (!enemy.confused) {
+                        player.health -= enemy.damage;
+                    } else {
+                        // Confused enemies deal less damage or miss
+                        if (Math.random() > 0.5) {
+                            player.health -= Math.floor(enemy.damage / 2);
+                        }
+                    }
                     return;
                 }
 
@@ -223,9 +313,87 @@
             });
         }
 
+        // --- MISCHIEF SYSTEM ---
+        let currentTarget = null;
+        let mischiefUsed = false;
+
+        function openMischief() {
+            if (mischiefUsed) {
+                alert("Your trickery is exhausted for this realm. Wait for the next.");
+                return;
+            }
+            // Find closest enemy
+            let closest = null;
+            let minDist = Infinity;
+            enemies.forEach(e => {
+                const dist = Math.sqrt(Math.pow(player.x - e.x, 2) + Math.pow(player.y - e.y, 2));
+                if (dist < minDist && dist < 3) { // Must be within 3 tiles
+                    minDist = dist;
+                    closest = e;
+                }
+            });
+
+            if (!closest) {
+                alert("No enemies nearby to trick!");
+                return;
+            }
+
+            currentTarget = closest;
+            document.getElementById('mischief-modal').style.display = 'flex';
+            document.getElementById('mischief-target-info').textContent = `Target: Lvl ${currentTarget.level} Foe`;
+            document.getElementById('mischief-input').value = '';
+            document.getElementById('mischief-result').textContent = '';
+            isPaused = true;
+        }
+
+        function closeMischief() {
+            document.getElementById('mischief-modal').style.display = 'none';
+            isPaused = false;
+            render();
+        }
+
+        function submitMischief() {
+            const text = document.getElementById('mischief-input').value;
+            if (!text.trim()) return;
+
+            const resultEl = document.getElementById('mischief-result');
+            resultEl.textContent = "Judging your deception...";
+
+            // Artificial delay to feel like AI is thinking
+            setTimeout(() => {
+                const successChance = 0.5 + (level / (currentTarget.level * 2));
+                const rolls = Math.random();
+                const isSuccess = rolls < successChance;
+
+                if (isSuccess) {
+                    resultEl.textContent = "Success! The fool is confounded by your illusions.";
+                    resultEl.style.color = "#00ff41";
+                    currentTarget.confused = true;
+                    // Lower enemy's level metaphorically
+                    currentTarget.damage = Math.max(1, currentTarget.damage - 5);
+                    mischiefUsed = true;
+                } else {
+                    resultEl.textContent = "Failure! Your trickery was too transparent.";
+                    resultEl.style.color = "#ff4141";
+                    // Enemy gets angry!
+                    currentTarget.damage += 5;
+                    mischiefUsed = true;
+                }
+
+                setTimeout(() => {
+                    closeMischief();
+                    processEnemyTurns();
+                    render();
+                }, 1500);
+            }, 1000);
+        }
+
+        let isPaused = false;
+
         // --- GAME CONTROL ---
         function startLevel() {
             isGameOver = false;
+            mischiefUsed = false;
             const width = 13 + (level * 2);
             const height = 9 + (level * 2);
 
@@ -243,47 +411,68 @@
         }
 
         document.addEventListener('keydown', function (event) {
-            if (isGameOver) return;
+            if (isGameOver || isPaused) return;
 
             let newX = player.x;
             let newY = player.y;
             let playerAction = false;
 
-            switch (event.key.toLowerCase()) {
-                case 'w': newY--; playerAction = true; break;
-                case 's': newY++; playerAction = true; break;
-                case 'a': newX--; playerAction = true; break;
-                case 'd': newX++; playerAction = true; break;
-                case '1': // Combat
-                    if (player.hasWeapon && player.weaponDurability > 0) {
-                        let attacked = false;
-                        for (let i = enemies.length - 1; i >= 0; i--) {
-                            const enemy = enemies[i];
-                            const dx = Math.abs(player.x - enemy.x);
-                            const dy = Math.abs(player.y - enemy.y);
-                            if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
-                                enemy.health -= 50;
-                                if (enemy.health <= 0) {
-                                    enemies.splice(i, 1);
-                                    player.coins += 5; // Extra runes for defeating enemies
-                                }
-                                attacked = true;
+            const key = event.key.toLowerCase();
+            if (key === 'w') { newY--; playerAction = true; }
+            else if (key === 's') { newY++; playerAction = true; }
+            else if (key === 'a') { newX--; playerAction = true; }
+            else if (key === 'd') { newX++; playerAction = true; }
+            else if (key === '1') { // Combat
+                if (player.hasWeapon && player.weaponDurability > 0) {
+                    let attacked = false;
+                    for (let i = enemies.length - 1; i >= 0; i--) {
+                        const enemy = enemies[i];
+                        const dx = Math.abs(player.x - enemy.x);
+                        const dy = Math.abs(player.y - enemy.y);
+                        if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
+                            enemy.health -= 50;
+                            if (enemy.health <= 0) {
+                                enemies.splice(i, 1);
+                                player.coins += 5; // Extra runes for defeating enemies
                             }
-                        }
-                        if (attacked) {
-                            player.weaponDurability--;
-                            if (player.weaponDurability <= 0) player.hasWeapon = false;
-                            playerAction = true;
+                            attacked = true;
                         }
                     }
-                    break;
-                default: return;
+                    if (attacked) {
+                        player.weaponDurability--;
+                        if (player.weaponDurability <= 0) player.hasWeapon = false;
+                        playerAction = true;
+                    }
+                }
+            } else if (key === '2') { // Mischief
+                openMischief();
+            } else {
+                return;
             }
             event.preventDefault();
 
             if (map[newY] && map[newY][newX] !== wallChar) {
                 player.x = newX;
                 player.y = newY;
+
+                // Handle running animation
+                if (playerAction && (key === 'w' || key === 's' || key === 'a' || key === 'd')) {
+                    isMoving = true;
+                    if (moveAnimTimer) clearInterval(moveAnimTimer);
+
+                    let frameCount = 0;
+                    moveAnimTimer = setInterval(() => {
+                        heroAnimationFrame = (heroAnimationFrame + 1) % 4;
+                        render();
+                        frameCount++;
+                        if (frameCount > 8) { // Animation duration
+                            clearInterval(moveAnimTimer);
+                            isMoving = false;
+                            heroAnimationFrame = 0;
+                            render();
+                        }
+                    }, 50); // Fast succession
+                }
             }
 
             collectibles.forEach((c, index) => {
