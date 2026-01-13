@@ -1,63 +1,24 @@
 <!DOCTYPE html>
+
 <head>
-    <title>Loading...</title>
-    <link rel="stylesheet" href="styles.css">.
+  <title>Loading...</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body style="background-color:black;">
-<h1 style="color: yellow;">Loki Game </h2>
-<h2 style="color: yellow;">Loki Game By Veer Drew and John and Alexander</h2>
-<p style="color: green; font size: 20px;"> the story of loki in a game</p>
-<img class="center-img" src="https://upload.wikimedia.org/wikipedia/commons/4/40/Processed_SAM_loki.jpg" width=250 height=300 alt="">
-<p></p>
-<button class="center-img" style=background-color:red;"width=50" onclick="window.location.href='/game'">
-  Play Game
-</button>
-<h2 style="color: yellow;">Description:</h2>
-<p style="color: green; font size: 20px; text-align: center;" class="bordered-text"</p>this is a 2d adventure where you become loki and help fight off enimies and relive moments of loki's story </p>
+  <h1 style="color: yellow;">Loki Game</h1>
+  <h2 style="color: yellow;">By Veer, Drew, John, and Alexander</h2>
+  <p style="color: green; font-size: 20px;"> the story of loki in a game</p>
+  <div class="center-img-container">
+    <img id="animated-loki" class="center-img" src="game/hero/3.png" width=250 height=300 alt="Animated Loki">
+  </div>
+  <p></p>
+  <button class="center-img" style="background-color:red; width: 200px; display: block; margin: 20px auto;"
+    onclick="window.location.href='/game'">
+    Play Game
+  </button>
+  <h2 style="color: yellow;">Description:</h2>
+  <p style="color: green; font-size: 20px; text-align: center;" class="bordered-text">this is a 2d adventure where you
+    become loki and help fight off enemies and relive moments of loki's story </p>
 
-
-<script>
-  const titles = [
-    "Loki",
-    "Mischief!",
-    "Loki..."
-  ];
-
-  const typingSpeed = 120;   // ms per character
-  const deletingSpeed = 80;
-  const pauseAfterType = 1000;
-  const pauseAfterDelete = 400;
-
-  let titleIndex = 0;
-  let charIndex = 0;
-  let isDeleting = false;
-
-  function typeTitle() {
-    const current = titles[titleIndex];
-
-    if (!isDeleting) {
-      // Typing
-      charIndex++;
-      document.title = current.slice(0, charIndex);
-
-      if (charIndex === current.length) {
-        setTimeout(() => (isDeleting = true), pauseAfterType);
-      }
-    } else {
-      // Deleting
-      charIndex--;
-      document.title = current.slice(0, charIndex);
-
-      if (charIndex === 0) {
-        isDeleting = false;
-        titleIndex = (titleIndex + 1) % titles.length;
-        setTimeout(() => {}, pauseAfterDelete);
-      }
-    }
-
-    setTimeout(typeTitle, isDeleting ? deletingSpeed : typingSpeed);
-  }
-
-  typeTitle();
-</script>
+  <script src="script.js"></script>

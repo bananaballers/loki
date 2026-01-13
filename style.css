@@ -203,3 +203,26 @@
         .ready-pulse {
             animation: ready-pulse 1.5s infinite;
         }
+
+        .center-img-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 20px auto;
+        }
+
+        .center-img {
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            image-rendering: pixelated;
+        }
+
+        .bordered-text {
+            border: 2px solid yellow;
+            /* Shorthand for width, style, and color */
+            padding: 5px;
+            /* Adds space between the text and the border */
+            display: inline-block;
+            /* Allows padding/margin to be applied correctly */
+        }
