@@ -30,6 +30,12 @@
         </div>
     </div>
 
+    <div id="fight-modal" class="modal">
+        <div class="modal-content fight-content">
+            <iframe id="fight-frame" class="fight-frame" src=""></iframe>
+        </div>
+    </div>
+
     <div id="hud">
         <div class="hud-item">
             <span class="hud-label">Realm Verse</span>
@@ -64,6 +70,8 @@
         <img id="hero-run-3" src="hero/5.png" alt="hero run 3">
         <img id="hero-run-4" src="hero/6.png" alt="hero run 4">
         <img id="enemy-img" src="enemy.png" alt="enemy">
+        <img id="enemy2-img" src="enemy2.png" alt="enemy elite">
+        <img id="enemy3-img" src="enemy3.png" alt="enemy boss">
         <img id="coin-img" src="coin.png" alt="coin">
         <img id="weapon-img" src="sword.png" alt="weapon">
     </div>
@@ -93,6 +101,8 @@
                 document.getElementById('hero-run-4')
             ],
             enemy: document.getElementById('enemy-img'),
+            enemy2: document.getElementById('enemy2-img'),
+            enemy3: document.getElementById('enemy3-img'),
             coin: document.getElementById('coin-img'),
             weapon: document.getElementById('weapon-img')
         };
@@ -165,13 +175,39 @@
             for (let i = 0; i < baseEnemyCount && emptyTiles.length > 0; i++) {
                 const pos = emptyTiles.pop();
                 const enemyLevel = Math.floor(Math.random() * level) + level;
+
+                // Enemy Type Logic
+                let type = 'normal';
+                let img = 'enemy.png';
+                let hp = 50 + (enemyLevel * 10);
+                let dmg = 5 + enemyLevel;
+
+                const roll = Math.random();
+
+                // Check Boss FIRST so they aren't masked by Elite check
+                // Making them spawn more (Level 3+, >85% roll)
+                if (level >= 3 && roll > 0.85) {
+                    type = 'boss';
+                    img = 'enemy3.png';
+                    hp *= 3;
+                    dmg *= 2;
+                } else if (level >= 2 && roll > 0.6) {
+                    type = 'elite';
+                    img = 'enemy2.png';
+                    hp *= 1.5;
+                    dmg *= 1.5;
+                }
+
                 enemies.push({
                     x: pos.x,
                     y: pos.y,
-                    health: 50 + (enemyLevel * 10),
-                    damage: 5 + enemyLevel,
+                    health: Math.floor(hp),
+                    maxHealth: Math.floor(hp),
+                    damage: Math.floor(dmg),
                     level: enemyLevel,
                     confused: false,
+                    type: type,
+                    img: img,
                     id: Math.random().toString(36).substr(2, 9)
                 });
             }
@@ -225,12 +261,17 @@
             // Draw Assets
             collectibles.forEach(c => ctx.drawImage(assets[c.type], c.x * TILE_SIZE, c.y * TILE_SIZE, TILE_SIZE, TILE_SIZE));
             enemies.forEach(e => {
-                ctx.drawImage(assets.enemy, e.x * TILE_SIZE, e.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                let sprite = assets.enemy;
+                if (e.type === 'elite') sprite = assets.enemy2;
+                if (e.type === 'boss') sprite = assets.enemy3;
+
+                ctx.drawImage(sprite, e.x * TILE_SIZE, e.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
                 // Health bar and level
                 ctx.fillStyle = "rgba(0,0,0,0.5)";
                 ctx.fillRect(e.x * TILE_SIZE, e.y * TILE_SIZE - 10, TILE_SIZE, 5);
                 ctx.fillStyle = e.confused ? "#00ff41" : "#ff0000";
-                ctx.fillRect(e.x * TILE_SIZE, e.y * TILE_SIZE - 10, (e.health / (50 + e.level * 10)) * TILE_SIZE, 5);
+                if (e.type === 'boss') ctx.fillStyle = "#aa00ff"; // Purple bar for boss
+                ctx.fillRect(e.x * TILE_SIZE, e.y * TILE_SIZE - 10, (e.health / e.maxHealth) * TILE_SIZE, 5);
 
                 ctx.fillStyle = "white";
                 ctx.font = "10px Cinzel";
@@ -258,6 +299,11 @@
             let weaponText = 'Unarmed';
             if (player.hasWeapon) {
                 weaponText = `Twin Daggers (${player.weaponDurability})`;
+                document.getElementById('weapon-text').classList.add('ready-pulse');
+                document.getElementById('weapon-text').style.color = "#00ff41";
+            } else {
+                document.getElementById('weapon-text').classList.remove('ready-pulse');
+                document.getElementById('weapon-text').style.color = "#ff4141";
             }
             document.getElementById('weapon-text').textContent = weaponText;
 
@@ -390,6 +436,62 @@
 
         let isPaused = false;
 
+        // --- COMBAT SYSTEM (3D) ---
+        let combatEnemyIndex = -1;
+
+        window.addEventListener('message', (event) => {
+            if (event.data.type === 'fight-result') {
+                endCombat(event.data.won);
+            }
+        });
+
+        function startCombat(enemyIndex) {
+            if (player.weaponDurability <= 0) return;
+
+            const enemy = enemies[enemyIndex];
+            combatEnemyIndex = enemyIndex;
+
+            document.getElementById('fight-modal').style.display = 'flex';
+            const frame = document.getElementById('fight-frame');
+
+            // Pass stats to 3D fight
+            // current health, damage, and image params
+            frame.src = `3D/index.html?hp=${enemy.health}&dmg=${enemy.damage}&img=${enemy.img}`;
+
+            // Ensure focus for interaction
+            frame.onload = () => {
+                frame.contentWindow.focus();
+            };
+
+            isPaused = true;
+        }
+
+
+        function endCombat(won) {
+            document.getElementById('fight-modal').style.display = 'none';
+            document.getElementById('fight-frame').src = ''; // Unload to stop loops
+            isPaused = false;
+
+            if (combatEnemyIndex !== -1 && won) {
+                // Victory logic
+                enemies.splice(combatEnemyIndex, 1);
+                player.coins += 10;
+                player.weaponDurability--;
+                if (player.weaponDurability <= 0) player.hasWeapon = false;
+
+                // Process a turn for safety (enemies might move after a fight)
+                processEnemyTurns();
+            } else if (combatEnemyIndex !== -1 && !won) {
+                // Defeat logic
+                player.health = 0;
+                isGameOver = true;
+                alert("You fell in battle. The Valkyries did not come.");
+            }
+
+            combatEnemyIndex = -1;
+            render();
+        }
+
         // --- GAME CONTROL ---
         function startLevel() {
             isGameOver = false;
@@ -424,24 +526,21 @@
             else if (key === 'd') { newX++; playerAction = true; }
             else if (key === '1') { // Combat
                 if (player.hasWeapon && player.weaponDurability > 0) {
-                    let attacked = false;
-                    for (let i = enemies.length - 1; i >= 0; i--) {
+                    // Find closest valid enemy
+                    let targetIdx = -1;
+                    for (let i = 0; i < enemies.length; i++) {
                         const enemy = enemies[i];
                         const dx = Math.abs(player.x - enemy.x);
                         const dy = Math.abs(player.y - enemy.y);
                         if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
-                            enemy.health -= 50;
-                            if (enemy.health <= 0) {
-                                enemies.splice(i, 1);
-                                player.coins += 5; // Extra runes for defeating enemies
-                            }
-                            attacked = true;
+                            targetIdx = i;
+                            break;
                         }
                     }
-                    if (attacked) {
-                        player.weaponDurability--;
-                        if (player.weaponDurability <= 0) player.hasWeapon = false;
-                        playerAction = true;
+
+                    if (targetIdx !== -1) {
+                        startCombat(targetIdx);
+                        return; // Wait for async fight
                     }
                 }
             } else if (key === '2') { // Mischief
@@ -503,6 +602,22 @@
             }
 
             render();
+        });
+
+        // --- SECRET CHEAT CODE ---
+        let cheatBuffer = "";
+        const secretWord = "banana";
+        document.addEventListener('keydown', (e) => {
+            cheatBuffer += e.key.toLowerCase();
+            if (cheatBuffer.length > secretWord.length) {
+                cheatBuffer = cheatBuffer.slice(-secretWord.length);
+            }
+            if (cheatBuffer === secretWord) {
+                console.log("🍌 Secret Activated: Moving to next level!");
+                level++;
+                startLevel();
+                cheatBuffer = "";
+            }
         });
 
         window.onload = () => {
