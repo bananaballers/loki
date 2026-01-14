@@ -155,6 +155,7 @@
         let isBlocking = false;
         let enemyState = 'IDLE'; // IDLE, CHARGING, ATTACKING, RECOVERING
         let lastAttackTime = 0;
+        const keys = { w: false, a: false, s: false, d: false };
 
         const swordImg = document.getElementById('sword-overlay');
         const flash = document.getElementById('flash');
@@ -165,7 +166,8 @@
 
         // --- PLAYER ACTIONS ---
         function attack() {
-            if (!isFighting || isBlocking) return;
+            if (!isFighting || isBlocking || Date.now() - lastAttackTime < 500) return;
+            lastAttackTime = Date.now();
 
             // Animate Sword
             swordImg.classList.remove('swing');
@@ -302,9 +304,17 @@
         });
         window.addEventListener('keydown', (e) => {
             if (e.code === 'Space') setBlock(true);
+            if (e.code === 'KeyW') keys.w = true;
+            if (e.code === 'KeyS') keys.s = true;
+            if (e.code === 'KeyA') keys.a = true;
+            if (e.code === 'KeyD') keys.d = true;
         });
         window.addEventListener('keyup', (e) => {
             if (e.code === 'Space') setBlock(false);
+            if (e.code === 'KeyW') keys.w = false;
+            if (e.code === 'KeyS') keys.s = false;
+            if (e.code === 'KeyA') keys.a = false;
+            if (e.code === 'KeyD') keys.d = false;
         });
         // Prevent context menu
         window.addEventListener('contextmenu', e => e.preventDefault());
@@ -318,6 +328,32 @@
         // --- LOOP ---
         function animate() {
             requestAnimationFrame(animate);
+
+            // Movement logic
+            if (isFighting && playerHP > 0) {
+                const speed = 0.1;
+                let dx = 0;
+                let dz = 0;
+
+                if (keys.w) dz -= speed;
+                if (keys.s) dz += speed;
+                if (keys.a) dx -= speed;
+                if (keys.d) dx += speed;
+
+                if (dx !== 0 || dz !== 0) {
+                    const nextX = camera.position.x + dx;
+                    const nextZ = camera.position.z + dz;
+                    const dist = Math.sqrt(nextX * nextX + nextZ * nextZ);
+
+                    // Collision radius (prevent getting closer than 2 units)
+                    if (dist > 2.0) {
+                        camera.position.x = nextX;
+                        camera.position.z = nextZ;
+                    }
+                }
+                camera.lookAt(0, 1.6, 0); // Always face the enemy
+            }
+
             updateEnemyAI();
 
             // Breathing / Idle

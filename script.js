@@ -1,3 +1,7 @@
+// THIS IS FOR THE DREW HOMEPAGE
+
+
+
 // Animation for Loki
 const lokiImg = document.getElementById('animated-loki');
 const frames = [
