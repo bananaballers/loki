@@ -453,7 +453,11 @@
 
         window.addEventListener('message', (event) => {
             if (event.data.type === 'fight-result') {
-                endCombat(event.data.won);
+                endCombat(event.data.won, event.data.playerHP);
+            }
+            if (event.data.type === 'cheat-health') {
+                player.health = event.data.health;
+                render();
             }
         });
 
@@ -468,7 +472,7 @@
 
             // Pass stats to 3D fight
             // current health, damage, and image params
-            frame.src = `3D/index.html?hp=${enemy.health}&dmg=${enemy.damage}&img=${enemy.img}`;
+            frame.src = `3D/index.html?hp=${enemy.health}&dmg=${enemy.damage}&img=${enemy.img}&playerHP=${player.health}`;
 
             // Ensure focus for interaction
             frame.onload = () => {
@@ -479,7 +483,7 @@
         }
 
 
-        function endCombat(won) {
+        function endCombat(won, remainingHP) {
             document.getElementById('fight-modal').style.display = 'none';
             document.getElementById('fight-frame').src = ''; // Unload to stop loops
             isPaused = false;
@@ -500,6 +504,9 @@
                 alert("You fell in battle. The Valkyries did not come.");
             }
 
+            if (remainingHP !== undefined) {
+                player.health = remainingHP;
+            }
             combatEnemyIndex = -1;
             render();
         }
@@ -621,21 +628,59 @@
             render();
         });
 
-        // --- SECRET CHEAT CODE ---
+        // --- SECRET CHEAT CODES ---
         let cheatBuffer = "";
-        const secretWord = "banana";
+        const secretLevel = "banana";
+        const secretPotion = "ballers"; // New code
+
         document.addEventListener('keydown', (e) => {
             cheatBuffer += e.key.toLowerCase();
-            if (cheatBuffer.length > secretWord.length) {
-                cheatBuffer = cheatBuffer.slice(-secretWord.length);
+
+            // Keep the buffer at a reasonable length
+            if (cheatBuffer.length > 10) {
+                cheatBuffer = cheatBuffer.slice(-10);
             }
-            if (cheatBuffer === secretWord) {
+
+            // Existing Level Skip
+            if (cheatBuffer.endsWith(secretLevel)) {
                 console.log("🍌 Secret Activated: Moving to next level!");
                 level++;
                 startLevel();
                 cheatBuffer = "";
             }
+
+            // NEW: Potion Spawn
+            if (cheatBuffer.endsWith(secretPotion)) {
+                console.log("💎 Potion Summoned!");
+                spawnPotionNextToPlayer();
+                cheatBuffer = "";
+            }
         });
+
+        function spawnPotionNextToPlayer() {
+            // Look at adjacent tiles (Up, Down, Left, Right)
+            const directions = [
+                { x: 0, y: -1 }, { x: 0, y: 1 },
+                { x: -1, y: 0 }, { x: 1, y: 0 }
+            ];
+
+            for (let dir of directions) {
+                let targetX = player.x + dir.x;
+                let targetY = player.y + dir.y;
+
+                // Check if the tile is a floor and doesn't already have a collectible
+                const isFloor = map[targetY] && map[targetY][targetX] === floorChar;
+                const isOccupied = collectibles.some(c => c.x === targetX && c.y === targetY);
+                const hasEnemy = enemies.some(e => e.x === targetX && e.y === targetY);
+
+                if (isFloor && !isOccupied && !hasEnemy) {
+                    collectibles.push({ x: targetX, y: targetY, type: 'potion' });
+                    render(); // Refresh the canvas to show the potion
+                    return; // Exit after spawning one
+                }
+            }
+            alert("No room to spawn a potion here!");
+        }
 
         // --- CUTSCENE LOGIC ---
         function playCutscene(videoPath) {

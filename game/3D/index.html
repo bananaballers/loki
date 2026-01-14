@@ -86,6 +86,12 @@
         <p>Enemy HP: <span id="enemy-hp">100</span></p>
         <p>Your HP: <span id="player-hp">100</span></p>
     </div>
+    <script>
+        // Pre-fill initial HP to avoid flicker
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('hp')) document.getElementById('enemy-hp').textContent = params.get('hp');
+        if (params.get('playerHP')) document.getElementById('player-hp').textContent = params.get('playerHP');
+    </script>
     <div id="crosshair"></div>
     <div class="damage-flash" id="flash"></div>
     <div id="block-shield"
@@ -101,6 +107,7 @@
         const startEnemyHP = parseInt(urlParams.get('hp')) || 100;
         const enemyDamage = parseInt(urlParams.get('dmg')) || 15;
         const enemyImgSrc = urlParams.get('img') || 'enemy.png';
+        const startPlayerHP = parseInt(urlParams.get('playerHP')) || 100;
         const isBoss = enemyImgSrc.includes('enemy3');
 
         // --- SCENE SETUP ---
@@ -150,7 +157,7 @@
 
         // --- GAME STATE ---
         let enemyHP = startEnemyHP;
-        let playerHP = 100;
+        let playerHP = startPlayerHP;
         let isFighting = true;
         let isBlocking = false;
         let enemyState = 'IDLE'; // IDLE, CHARGING, ATTACKING, RECOVERING
@@ -290,9 +297,13 @@
             }
             // Send message to parent
             setTimeout(() => {
-                window.parent.postMessage({ type: 'fight-result', won: won }, '*');
+                window.parent.postMessage({ type: 'fight-result', won: won, playerHP: playerHP }, '*');
             }, 1000);
         }
+
+        // --- CHEAT CODES ---
+        let cheatBuffer = "";
+        const secretPotion = "ballers";
 
         // --- INPUTS ---
         window.addEventListener('mousedown', (e) => {
@@ -308,6 +319,18 @@
             if (e.code === 'KeyS') keys.s = true;
             if (e.code === 'KeyA') keys.a = true;
             if (e.code === 'KeyD') keys.d = true;
+
+            // Cheat Buffer
+            cheatBuffer += e.key.toLowerCase();
+            if (cheatBuffer.length > 10) cheatBuffer = cheatBuffer.slice(-10);
+            if (cheatBuffer.endsWith(secretPotion)) {
+                playerHP = 100;
+                document.getElementById('player-hp').textContent = playerHP;
+                showMessage("HEALTH RESTORED! (CHEAT)", "#0f0");
+                cheatBuffer = "";
+                // Notify parent
+                window.parent.postMessage({ type: 'cheat-health', health: 100 }, '*');
+            }
         });
         window.addEventListener('keyup', (e) => {
             if (e.code === 'Space') setBlock(false);
