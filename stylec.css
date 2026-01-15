@@ -1,0 +1,75 @@
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    body {
+        background: #0a0a0a;
+        color: #d4af37;
+        font-family: 'Cinzel', serif;
+        text-align: center;
+        padding: 100px 20px;
+        margin: 0;
+        overflow-x: hidden;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+    }
+
+    h1 {
+        color: #00ff41;
+        text-shadow: 0 0 20px rgba(0, 255, 65, 0.8);
+        font-size: 5em;
+        margin-bottom: 60px;
+        letter-spacing: 15px;
+        animation: fadeIn 1s ease-out;
+    }
+
+    .credit-item {
+        margin: 40px 0;
+        animation: fadeIn 1s ease-out both;
+    }
+
+    .credit-item:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+
+    .credit-item:nth-child(3) {
+        animation-delay: 0.4s;
+    }
+
+    .credit-item:nth-child(4) {
+        animation-delay: 0.6s;
+    }
+
+    .credit-item:nth-child(5) {
+        animation-delay: 0.8s;
+    }
+
+    .credit-item:nth-child(6) {
+        animation-delay: 1.0s;
+    }
+
+    .name {
+        font-weight: bold;
+        font-size: 3em;
+        margin-bottom: 10px;
+        color: #fff;
+        text-shadow: 0 0 10px var(--gold);
+    }
+
+    .role {
+        font-style: italic;
+        color: #bdc3c7;
+        font-size: 1.8em;
+        letter-spacing: 2px;
+    }

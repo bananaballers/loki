@@ -12,6 +12,10 @@
 </head>
 
 <body>
+    <audio id="bg-music" loop>
+        <source src="music/game.mp3" type="audio/mpeg">
+    </audio>
+
 
     <h1>LOKI</h1>
     <p class="instructions">"Glorious purpose awaits." Use WASD to traverse the Nine Realms. Collect Runes and find your
@@ -61,6 +65,18 @@
             <span class="hud-label">Mischief</span>
             <span id="mischief-status" class="hud-value">Ready</span>
         </div>
+        <div class="hud-item" onclick="openCredits()" style="cursor: pointer;">
+            <span class="hud-label">Info</span>
+            <span class="hud-value" style="color: var(--gold);">Credits</span>
+        </div>
+    </div>
+
+    <!-- Credits Modal -->
+    <div id="credits-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeCredits()">&times;</span>
+            <iframe src="../cred.html" style="width: 100%; height: 100%; border: none;"></iframe>
+        </div>
     </div>
 
     <canvas id="gameCanvas"></canvas>
@@ -82,6 +98,11 @@
     </div>
 
     <script>
+
+        const music = document.getElementById('bg-music');
+        music.play().catch(e => console.log("Audio play failed:", e));
+
+
         // --- GAME SETUP & CONFIG ---
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
@@ -444,6 +465,17 @@
                     render();
                 }, 1500);
             }, 1000);
+        }
+
+        function openCredits() {
+            document.getElementById('credits-modal').style.display = 'flex';
+            isPaused = true;
+        }
+
+        function closeCredits() {
+            document.getElementById('credits-modal').style.display = 'none';
+            isPaused = false;
+            render();
         }
 
         let isPaused = false;

@@ -1,29 +1,88 @@
 <!DOCTYPE html>
-head>
-  <title>Loading...</title>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loki Game - The Story of Mischief</title>
   <link rel="stylesheet" href="style.css">
 </head>
 
-  
-  
+<body>
 
 
-<h1 style="color: yellow; .shadow-basic {
-  text-shadow: 2px; yellow;
-}">Loki Game</h1>
-  <h2 style="color: yellow;">By Veer, Drew, John, and Alexander</h2>
-  <p style="color: #bdc3c7; font-size: 20px;"> the story of loki in a game</p>
+
+  <h1>Loki Game</h1>
+  <h2>By Veer, Drew, John, and Alexander</h2>
+  <p class="instructions">The story of Loki in a game</p>
+
   <div class="center-img-container">
-    <img id="animated-loki" class="center-img" src="game/hero/3.png" width=250 height=300 alt="Animated Loki">
+    <img id="animated-loki" class="center-img" src="game/hero/3.png" width="250" height="300" alt="Animated Loki">
   </div>
-  <p></p>
-  <button class="center-img" style="background-color:red; width: 200px; display: block; margin: 20px auto;"
-    onclick="window.location.href='/game'">
-    Play Game
-  </button>
-  <h2 style="color: yellow;">Description:</h2>
-  <p style="color: #bdc3c7; font-size: 20px; text-align: center;" class="bordered-text">this is a 2d adventure where you
-    become loki and help fight off enemies and relive moments of loki's story </p>
 
+  <div style="display: flex; flex-direction: column; align-items: center; gap: 20px; margin: 20px 0;">
+    <button onclick="window.location.href='/game'">
+      Play Game
+    </button>
+    <button onclick="openCredits()">
+      Credits
+    </button>
+  </div>
+
+  <h2>Description:</h2>
+  <p class="bordered-text" style="color: #bdc3c7; font-size: 20px; max-width: 600px; margin: 0 auto;">
+    This is a 2D adventure where you become Loki and help fight off enemies and relive moments of Loki's story.
+  </p>
+
+  <!-- Credits Modal -->
+  <div id="credits-modal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeCredits()">&times;</span>
+      <iframe src="cred.html"></iframe>
+    </div>
+  </div>
+
+  <!-- Entry Overlay -->
+  <div id="enter-overlay"
+    style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0a0a0a; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10000; text-align: center;">
+    <h1 style="font-size: 4em; margin-bottom: 40px;">Loki Game</h1>
+    <button id="enter-button" style="font-size: 1.5em; padding: 20px 40px;">Begin the Mischief</button>
+  </div>
+
+  <audio id="bg-music" loop>
+    <source src="game/music/intro.mp3" type="audio/mpeg">
+  </audio>
+
+  <div id="music-credit" style="color: #00ff41; font-size: 20px; margin-top: 10px; font-family: 'Cinzel', serif;">
+    Playing: Trickster Theme by Veer Bajaj
+  </div>
+
+  <script>
+    function openCredits() {
+      document.getElementById('credits-modal').style.display = 'flex';
+    }
+    function closeCredits() {
+      document.getElementById('credits-modal').style.display = 'none';
+    }
+    // Close modal when clicking outside of it
+    window.onclick = function (event) {
+      const modal = document.getElementById('credits-modal');
+      if (event.target == modal) {
+        modal.style.display = "none";
+      }
+    }
+
+    // Play music and hide overlay on enter button click
+    const enterButton = document.getElementById('enter-button');
+    const enterOverlay = document.getElementById('enter-overlay');
+    const music = document.getElementById('bg-music');
+
+    enterButton.addEventListener('click', function () {
+      music.play().catch(e => console.log("Audio play failed:", e));
+      enterOverlay.style.display = 'none';
+    });
+  </script>
   <script src="script.js"></script>
- 
+</body>
+
+</html>
