@@ -15,6 +15,17 @@
     <audio id="bg-music" loop>
         <source src="music/game.mp3" type="audio/mpeg">
     </audio>
+    <audio id="gameover-music">
+        <source src="music/gameover.mp3" type="audio/mpeg">
+    </audio>
+
+    <div id="notification-container"></div>
+
+    <div id="death-screen">
+        <h1 id="death-title">YOU PERISHED</h1>
+        <p id="death-msg"></p>
+        <button onclick="location.reload()">REBORN</button>
+    </div>
 
 
     <h1>LOKI</h1>
@@ -126,9 +137,46 @@
         var currentGateAnswer = "";
         var currentGateHint = "";
         const music = document.getElementById('bg-music');
-        music.play().catch(e => console.log("Audio play failed:", e));
 
+        function playMusicWithRetry() {
+            music.play().catch(e => {
+                console.log("Audio play failed, retrying...", e);
+                setTimeout(playMusicWithRetry, 100);
+            });
+        }
 
+        playMusicWithRetry();
+
+        function showNotification(text) {
+            const container = document.getElementById('notification-container');
+            const note = document.createElement('div');
+            note.className = 'notification';
+            note.textContent = text;
+            container.appendChild(note);
+
+            setTimeout(() => {
+                note.style.animation = 'fadeOut 1s forwards';
+                setTimeout(() => note.remove(), 1000);
+            }, 3000);
+        }
+
+        function showDeathScreen(text) {
+            isGameOver = true;
+            isPaused = true;
+            const screen = document.getElementById('death-screen');
+            const msgEl = document.getElementById('death-msg');
+            msgEl.textContent = text;
+            screen.style.display = 'flex';
+
+            // Stop background music
+            music.pause();
+            // Play game over music
+            const goMusic = document.getElementById('gameover-music');
+            if (goMusic) {
+                goMusic.currentTime = 0;
+                goMusic.play().catch(e => console.log("Game over music failed to play:", e));
+            }
+        }
         // --- GAME SETUP & CONFIG ---
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
@@ -228,28 +276,33 @@
             const baseEnemyCount = 2 + (level * 2);
             for (let i = 0; i < baseEnemyCount && emptyTiles.length > 0; i++) {
                 const pos = emptyTiles.pop();
-                const enemyLevel = Math.floor(Math.random() * level) + level;
 
-                // Enemy Type Logic
+                // Determine Enemy Type and Level first
+                let enemyLevel = 1;
                 let type = 'normal';
                 let img = 'enemy.png';
-                let hp = 50 + (enemyLevel * 10);
-                let dmg = 5 + enemyLevel;
 
                 const roll = Math.random();
-
-                // Check Boss FIRST so they aren't masked by Elite check
-                // Making them spawn more (Level 3+, >85% roll)
                 if (level >= 3 && roll > 0.85) {
+                    enemyLevel = 3;
                     type = 'boss';
                     img = 'enemy3.png';
-                    hp *= 3;
-                    dmg *= 2;
                 } else if (level >= 2 && roll > 0.6) {
+                    enemyLevel = 2;
                     type = 'elite';
                     img = 'enemy2.png';
-                    hp *= 1.5;
+                }
+
+                // Stats based on fixed level
+                let hp = 50 + (enemyLevel * 25);
+                let dmg = 5 + (enemyLevel * 5);
+
+                if (type === 'boss') {
+                    hp *= 2; // Extra beefy
                     dmg *= 1.5;
+                } else if (type === 'elite') {
+                    hp *= 1.3;
+                    dmg *= 1.2;
                 }
 
                 enemies.push({
@@ -425,7 +478,7 @@
 
         function openMischief() {
             if (mischiefUsed) {
-                alert("Your trickery is exhausted for this realm. Wait for the next.");
+                showNotification("Your trickery is exhausted for this realm. Wait for the next.");
                 return;
             }
 
@@ -441,7 +494,7 @@
             });
 
             if (!closest) {
-                alert("No enemies nearby to trick!");
+                showNotification("No enemies nearby to trick!");
                 return;
             }
 
@@ -578,8 +631,9 @@
             } else if (combatEnemyIndex !== -1 && !won) {
                 // Defeat logic
                 player.health = 0;
-                isGameOver = true;
-                alert("You fell in battle. The Valkyries did not come.");
+                playCutscene('scene/death.mp4', () => {
+                    showDeathScreen("You fell in battle. The Valkyries did not come.");
+                });
             }
 
             if (remainingHP !== undefined) {
@@ -774,7 +828,7 @@
                     hintText.style.display = 'block';
                     hintBtn.style.display = 'none'; // Hide button after purchase
                 } else {
-                    alert("You do not have enough Runes!");
+                    showNotification("You do not have enough Runes!");
                 }
             };
 
@@ -782,8 +836,9 @@
 
             if (player.health <= 0) {
                 player.health = 0;
-                isGameOver = true;
-                alert("Your life force fades. Ragnarok has come for you. Refresh to reborn.");
+                playCutscene('scene/death.mp4', () => {
+                    showDeathScreen("Your life force fades. Ragnarok has come for you.");
+                });
             }
 
             render();
@@ -840,11 +895,11 @@
                     return; // Exit after spawning one
                 }
             }
-            alert("No room to spawn a potion here!");
+            showNotification("No room to spawn a potion here!");
         }
 
         // --- CUTSCENE LOGIC ---
-        function playCutscene(videoPath) {
+        function playCutscene(videoPath, callback) {
             const modal = document.getElementById('cutscene-modal');
             const video = document.getElementById('cutscene-video');
 
@@ -862,9 +917,23 @@
                 modal.style.display = 'none';
                 video.pause();
                 video.src = "";
-                isPaused = false;
-                render();
-                // Ensure music resumes if we had any
+                if (callback) {
+                    callback();
+                } else {
+                    isPaused = false;
+                    render();
+                }
+            };
+
+            video.onerror = () => {
+                console.error("Video failed to load:", videoPath);
+                modal.style.display = 'none';
+                if (callback) {
+                    callback();
+                } else {
+                    isPaused = false;
+                    render();
+                }
             };
         }
 

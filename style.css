@@ -329,3 +329,107 @@
             color: yellow;
             cursor: pointer;
         }
+
+        /* Notifications */
+        #notification-container {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .notification {
+            background: rgba(0, 0, 0, 0.9);
+            color: var(--gold);
+            border: 1px solid var(--gold);
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-family: 'Cinzel', serif;
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
+            animation: slideInDown 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+            min-width: 300px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            border-left: 4px solid var(--gold);
+        }
+
+        @keyframes slideInDown {
+            from {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
+            to {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+        }
+
+        /* Death Screen */
+        #death-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, #300000 0%, #000 100%);
+            z-index: 10001;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #ff4141;
+            text-shadow: 0 0 20px #ff0000;
+        }
+
+        #death-screen h1 {
+            font-size: 5em;
+            margin: 0;
+            color: #ff4141;
+            text-shadow: 0 0 30px #ff0000;
+            letter-spacing: 15px;
+        }
+
+        #death-screen p {
+            font-size: 1.8em;
+            margin: 20px 0;
+            color: #ccc;
+            font-family: 'Cormorant Garamond', serif;
+            font-style: italic;
+        }
+
+        #death-screen button {
+            background: #600;
+            border-color: #f00;
+            color: #fff;
+            margin-top: 30px;
+            font-size: 1.4em;
+            padding: 15px 50px;
+            border: 2px solid #f00;
+            border-radius: 5px;
+            box-shadow: 0 0 10px #f00;
+        }
+
+        #death-screen button:hover {
+            background: #f00;
+            color: #000;
+            box-shadow: 0 0 40px #f00;
+        }
