@@ -1,0 +1,30 @@
+name: Deploy to GitHub Pages
+
+on:
+  workflow_dispatch:   # <-- manual trigger
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      # If you have a build step, put it here
+      # - run: npm install && npm run build
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .   # or ./dist, ./build, etc
+
+      - name: Deploy
+        uses: actions/deploy-pages@v4
