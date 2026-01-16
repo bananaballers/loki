@@ -21,6 +21,41 @@
     <p class="instructions">"Glorious purpose awaits." Use WASD to traverse the Nine Realms. Collect Runes and find your
         Daggers to strike down enemies (1) or use Mischief (2) to confuse them.</p>
 
+
+
+
+
+    <div id="gatekeeper-modal" class="modal">
+        <div class="modal-content">
+            <h2 style="color: var(--gold); font-family: 'Cinzel';">The Gatekeeper's Trial</h2>
+            <p id="gate-question-text" style="font-size: 1.2em; margin-bottom: 20px;"></p>
+
+            <div id="gate-options-container"
+                style="display: flex; flex-direction: column; gap: 10px; width: 80%; margin: 0 auto;"></div>
+
+            <div style="margin-top: 20px; border-top: 1px solid #333; padding-top: 15px;">
+                <button id="hint-btn" onclick="buyHint()"
+                    style="background: #443300; border: 1px solid var(--gold); color: var(--gold); cursor: pointer; padding: 5px 10px;">
+                    Buy Hint (10 Runes)
+                </button>
+                <p id="gate-hint-text" style="color: #aaa; font-style: italic; margin-top: 10px; display: none;"></p>
+            </div>
+
+            <p id="gate-feedback" style="margin-top: 15px; font-weight: bold;"></p>
+        </div>
+    </div>
+
+
+
+    <div id="fight-modal" class="modal">
+        <div class="modal-content fight-content">
+            <iframe id="fight-frame" class="fight-frame" src=""></iframe>
+        </div>
+    </div>
+
+    <div id="cutscene-modal" class="modal" style="background: black; z-index: 2000; display: none;">
+        <video id="cutscene-video" style="width: 100%; height: 100%; object-fit: contain;" playsinline></video>
+    </div>
     <div id="mischief-modal" class="modal">
         <div class="modal-content">
             <h2>Cast an Illusion</h2>
@@ -33,17 +68,6 @@
             <div id="mischief-result" class="mischief-result"></div>
         </div>
     </div>
-
-    <div id="fight-modal" class="modal">
-        <div class="modal-content fight-content">
-            <iframe id="fight-frame" class="fight-frame" src=""></iframe>
-        </div>
-    </div>
-
-    <div id="cutscene-modal" class="modal" style="background: black; z-index: 2000; display: none;">
-        <video id="cutscene-video" style="width: 100%; height: 100%; object-fit: contain;" playsinline></video>
-    </div>
-
     <div id="hud">
         <div class="hud-item">
             <span class="hud-label">Realm Verse</span>
@@ -99,6 +123,8 @@
 
     <script>
 
+        var currentGateAnswer = "";
+        var currentGateHint = "";
         const music = document.getElementById('bg-music');
         music.play().catch(e => console.log("Audio play failed:", e));
 
@@ -106,6 +132,7 @@
         // --- GAME SETUP & CONFIG ---
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
+
 
         const TILE_SIZE = 48; // Increased size for more detail
         const wallChar = '#';
@@ -401,12 +428,13 @@
                 alert("Your trickery is exhausted for this realm. Wait for the next.");
                 return;
             }
+
             // Find closest enemy
             let closest = null;
             let minDist = Infinity;
             enemies.forEach(e => {
                 const dist = Math.sqrt(Math.pow(player.x - e.x, 2) + Math.pow(player.y - e.y, 2));
-                if (dist < minDist && dist < 3) { // Must be within 3 tiles
+                if (dist < minDist && dist < 3) {
                     minDist = dist;
                     closest = e;
                 }
@@ -418,11 +446,18 @@
             }
 
             currentTarget = closest;
-            document.getElementById('mischief-modal').style.display = 'flex';
-            document.getElementById('mischief-target-info').textContent = `Target: Lvl ${currentTarget.level} Foe`;
-            document.getElementById('mischief-input').value = '';
-            document.getElementById('mischief-result').textContent = '';
-            isPaused = true;
+
+            // FIX STARTS HERE:
+            const modal = document.getElementById('mischief-modal');
+            if (modal) {
+                modal.style.display = 'flex';
+                document.getElementById('mischief-target-info').textContent = `Target: Lvl ${currentTarget.level} Foe`;
+                document.getElementById('mischief-input').value = '';
+                document.getElementById('mischief-result').textContent = '';
+                isPaused = true;
+            } else {
+                console.error("Could not find mischief-modal element!");
+            }
         }
 
         function closeMischief() {
@@ -431,42 +466,53 @@
             render();
         }
 
-        function submitMischief() {
+        async function submitMischief() {
             const text = document.getElementById('mischief-input').value;
             if (!text.trim()) return;
 
             const resultEl = document.getElementById('mischief-result');
             resultEl.textContent = "Judging your deception...";
 
-            // Artificial delay to feel like AI is thinking
-            setTimeout(() => {
-                const successChance = 0.5 + (level / (currentTarget.level * 2));
-                const rolls = Math.random();
-                const isSuccess = rolls < successChance;
+            try {
+                const res = await fetch(
+                    "https://loki.veerbajaj11.workers.dev/mischief",
+                    {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            text,
+                            level,
+                            enemyLevel: currentTarget.level
+                        })
+                    }
+                );
 
-                if (isSuccess) {
-                    resultEl.textContent = "Success! The fool is confounded by your illusions.";
+                const data = await res.json();
+                console.log("Mischief Response:", data);
+                if (data.success) {
+                    resultEl.textContent = "Loki cackles - your mischief succeeds!";
                     resultEl.style.color = "#00ff41";
                     currentTarget.confused = true;
-                    // Lower enemy's level metaphorically
-                    currentTarget.damage = Math.max(1, currentTarget.damage - 5);
-                    mischiefUsed = true;
+                    currentTarget.damage = Math.max(1, Math.floor(currentTarget.damage * 0.6));
                 } else {
-                    resultEl.textContent = "Failure! Your trickery was too transparent.";
+                    resultEl.textContent = "Loki sees through your ruse... failure.";
                     resultEl.style.color = "#ff4141";
-                    // Enemy gets angry!
-                    currentTarget.damage += 5;
-                    mischiefUsed = true;
                 }
+
+                mischiefUsed = true;
 
                 setTimeout(() => {
                     closeMischief();
                     processEnemyTurns();
                     render();
                 }, 1500);
-            }, 1000);
-        }
 
+            } catch (err) {
+                resultEl.textContent = "The trick fizzles in chaos...";
+                resultEl.style.color = "#ff4141";
+                console.error(err);
+            }
+        }
         function openCredits() {
             document.getElementById('credits-modal').style.display = 'flex';
             isPaused = true;
@@ -641,15 +687,98 @@
                 }
             });
 
+            // Inside your document.addEventListener('keydown', ...) 
             if (map[player.y][player.x] === exitChar) {
-                level++;
-                startLevel();
+                // Instead of level++ and startLevel(), trigger the question
+                askGatekeeperQuestion();
                 return;
             }
-
             if (playerAction) {
                 processEnemyTurns();
             }
+
+
+            async function askGatekeeperQuestion() {
+                isPaused = true;
+                const modal = document.getElementById('gatekeeper-modal');
+                const questionEl = document.getElementById('gate-question-text');
+                const optionsContainer = document.getElementById('gate-options-container');
+                const feedbackEl = document.getElementById('gate-feedback');
+                const hintText = document.getElementById('gate-hint-text');
+                const hintBtn = document.getElementById('hint-btn');
+
+                feedbackEl.textContent = "";
+                hintText.style.display = 'none';
+                hintBtn.style.display = 'inline-block';
+                optionsContainer.innerHTML = "Loading choices...";
+                modal.style.display = 'flex';
+
+                try {
+                    const response = await fetch('questions/list.json');
+                    const questions = await response.json();
+
+                    if (questions && questions.length > 0) {
+                        const randomQ = questions[Math.floor(Math.random() * questions.length)];
+                        questionEl.textContent = randomQ.question;
+                        currentGateAnswer = randomQ.answer;
+                        currentGateHint = randomQ.hint;
+
+                        optionsContainer.innerHTML = "";
+                        randomQ.options.forEach(option => {
+                            const btn = document.createElement('button');
+                            btn.textContent = option;
+                            btn.className = "gate-option-btn"; // Add a class for CSS styling
+                            btn.style = "padding: 10px; background: #111; color: white; border: 1px solid var(--gold); cursor: pointer; font-family: 'Cinzel';";
+                            btn.onclick = () => checkGateAnswer(option);
+                            optionsContainer.appendChild(btn);
+                        });
+                    }
+                } catch (e) {
+                    console.error("Error:", e);
+                    questionEl.textContent = "Fallout: Who is the God of Mischief?";
+                    currentGateAnswer = "Loki";
+                    currentGateHint = "It's the name of this game.";
+                    optionsContainer.innerHTML = `<button onclick="checkGateAnswer('Loki')">Loki</button>`;
+                }
+            }
+
+            window.checkGateAnswer = function (selectedOption) {
+                const feedbackEl = document.getElementById('gate-feedback');
+
+                if (selectedOption === currentGateAnswer) {
+                    feedbackEl.textContent = "Correct. You may pass.";
+                    feedbackEl.style.color = "#00ff41";
+                    setTimeout(() => {
+                        document.getElementById('gatekeeper-modal').style.display = 'none';
+                        isPaused = false;
+                        level++;
+                        startLevel();
+                    }, 1000);
+                } else {
+                    feedbackEl.textContent = "Incorrect. The Bifrost remains closed.";
+                    feedbackEl.style.color = "#ff4141";
+                    // Penalty: maybe take 5 health?
+                    player.health -= 5;
+                    document.getElementById('health-text').textContent = player.health;
+                }
+            };
+
+            window.buyHint = function () {
+                const hintText = document.getElementById('gate-hint-text');
+                const hintBtn = document.getElementById('hint-btn');
+
+                if (player.coins >= 10) {
+                    player.coins -= 10;
+                    document.getElementById('coin-text').textContent = player.coins;
+                    hintText.textContent = "Hint: " + currentGateHint;
+                    hintText.style.display = 'block';
+                    hintBtn.style.display = 'none'; // Hide button after purchase
+                } else {
+                    alert("You do not have enough Runes!");
+                }
+            };
+
+            // Ensure this is defined globally so the button can see it
 
             if (player.health <= 0) {
                 player.health = 0;

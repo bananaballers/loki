@@ -1,0 +1,24 @@
+[
+    {
+        "question": "What is the name of the bridge connecting Midgard to Asgard?",
+        "options": [
+            "Bifrost",
+            "Rainbow Road",
+            "The Gauntlet",
+            "Yggdrasil"
+        ],
+        "answer": "Bifrost",
+        "hint": "It is also known as the Rainbow Bridge."
+    },
+    {
+        "question": "Who is Loki's biological father?",
+        "options": [
+            "Odin",
+            "Laufey",
+            "Thor",
+            "Bor"
+        ],
+        "answer": "Laufey",
+        "hint": "He was the King of the Frost Giants."
+    }
+]
