@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hall of Heroes - Loki: The Trickster's Trial</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Cormorant+Garamond:wght@400;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        body {
+            background: radial-gradient(circle at center, #1a2e1a 0%, #0a0a0a 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+        }
+
+        .leaderboard-container {
+            background: rgba(5, 18, 8, 0.8);
+            border: 3px solid var(--gold);
+            border-radius: 15px;
+            width: 100%;
+            max-width: 800px;
+            padding: 40px;
+            box-shadow: 0 0 50px rgba(0, 255, 65, 0.1), inset 0 0 20px rgba(212, 175, 55, 0.05);
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            margin-bottom: 10px;
+            font-size: 4em;
+        }
+
+        .subtitle {
+            color: var(--dark-gold);
+            font-style: italic;
+            margin-bottom: 40px;
+            font-size: 1.2em;
+            letter-spacing: 2px;
+        }
+
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.4em;
+        }
+
+        .leaderboard-table th {
+            color: var(--gold);
+            border-bottom: 2px solid var(--gold);
+            padding: 15px;
+            text-align: left;
+            text-transform: uppercase;
+            font-family: 'Cinzel', serif;
+            letter-spacing: 2px;
+        }
+
+        .leaderboard-table td {
+            padding: 20px 15px;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+            color: #ccc;
+        }
+
+        .rank {
+            font-family: 'Cinzel', serif;
+            color: var(--gold);
+            font-weight: bold;
+            width: 60px;
+        }
+
+        tr:nth-child(1) .rank {
+            color: #fff;
+            text-shadow: 0 0 10px var(--gold);
+            font-size: 1.2em;
+        }
+
+        tr:nth-child(2) .rank {
+            color: #e5e4e2;
+        }
+
+        tr:nth-child(3) .rank {
+            color: #cd7f32;
+        }
+
+        .loading {
+            padding: 40px;
+            color: var(--gold);
+            font-size: 1.5em;
+            animation: pulse 2s infinite;
+        }
+
+        .back-btn {
+            margin-top: 40px;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 0.5;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0.5;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <h1>HALL OF HEROES</h1>
+    <p class="subtitle">Their legends are eternal</p>
+
+    <div class="leaderboard-container">
+        <div id="loading" class="loading">Communing with the Norns...</div>
+        <table id="leaderboard-table" class="leaderboard-table" style="display: none;">
+            <thead>
+                <tr>
+                    <th class="rank">#</th>
+                    <th>Hero</th>
+                    <th>Runes</th>
+                    <th>Realm</th>
+                </tr>
+            </thead>
+            <tbody id="leaderboard-body"></tbody>
+        </table>
+    </div>
+
+    <a href="../game/index.html" class="back-btn">
+        <button>Return to Midgard</button>
+    </a>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+        import { getFirestore, collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAPnWpytVCOF5UfryHEDCVe0fEs-Vx1xSE",
+            authDomain: "loki-2dcab.firebaseapp.com",
+            projectId: "loki-2dcab",
+            storageBucket: "loki-2dcab.firebasestorage.app",
+            messagingSenderId: "710391143408",
+            appId: "1:710391143408:web:48667f1adfddbff5a15b35"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        async function fetchLeaderboard() {
+            try {
+                const q = query(collection(db, "leaderboard"), orderBy("score", "desc"), limit(20));
+                const querySnapshot = await getDocs(q);
+                const body = document.getElementById('leaderboard-body');
+                body.innerHTML = "";
+
+                let rank = 1;
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const row = `<tr>
+                        <td class="rank">${rank++}</td>
+                        <td>${data.name || 'Anonymous Hero'}</td>
+                        <td style="color: var(--gold); font-weight: bold;">${(data.score || 0).toLocaleString()}</td>
+                        <td>${data.realm || 1}</td>
+                    </tr>`;
+                    body.innerHTML += row;
+                });
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('leaderboard-table').style.display = 'table';
+            } catch (e) {
+                console.error("Error fetching leaderboard:", e);
+                document.getElementById('loading').textContent = "The Norns are silent. (Failed to load)";
+            }
+        }
+
+        fetchLeaderboard();
+        // Refresh every 30 seconds for live feel
+        setInterval(fetchLeaderboard, 30000);
+    </script>
+</body>
+
+</html>

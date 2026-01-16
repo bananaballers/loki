@@ -15,7 +15,7 @@
     <audio id="bg-music" loop>
         <source src="music/game.mp3" type="audio/mpeg">
     </audio>
-    <audio id="gameover-music">
+    <audio id="gameover-music" loop>
         <source src="music/gameover.mp3" type="audio/mpeg">
     </audio>
 
@@ -24,7 +24,29 @@
     <div id="death-screen">
         <h1 id="death-title">YOU PERISHED</h1>
         <p id="death-msg"></p>
-        <button onclick="location.reload()">REBORN</button>
+
+        <div id="score-submit-container">
+            <h3>Record your Legend</h3>
+            <p>Runes: <span id="final-score">0</span></p>
+            <input type="text" id="player-name" placeholder="Enter Hero Name" maxlength="15">
+            <button id="submit-score-btn" onclick="submitScore()">Submit to Hall of Heroes</button>
+        </div>
+
+        <button onclick="location.reload()" style="margin-top: 20px;">REBORN</button>
+    </div>
+
+    <div id="name-modal" class="modal" style="display: none; z-index: 10002;">
+        <div class="modal-content" style="text-align: center; height: auto; width: 450px;">
+            <h2 style="color: var(--gold); font-family: 'Cinzel'; margin-top: 10px;">Whom do you represent?</h2>
+            <p style="color: #ccc; font-style: italic; margin-bottom: 25px;">Enter your name to begin your journey
+                through the Nine Realms.</p>
+            <input type="text" id="initial-player-name" placeholder="Enter Legend Name" maxlength="15"
+                style="background: #000; border: 1px solid var(--gold); color: var(--gold); padding: 12px; font-family: 'Cinzel', serif; text-align: center; font-size: 1.25em; width: 80%; margin-bottom: 25px; outline: none; box-shadow: 0 0 10px rgba(212, 175, 55, 0.2);">
+            <div style="margin-bottom: 10px;">
+                <button id="start-game-btn" onclick="startGameWithName()"
+                    style="font-size: 1.2em; padding: 15px 50px;">Ascend</button>
+            </div>
+        </div>
     </div>
 
 
@@ -47,7 +69,7 @@
             <div style="margin-top: 20px; border-top: 1px solid #333; padding-top: 15px;">
                 <button id="hint-btn" onclick="buyHint()"
                     style="background: #443300; border: 1px solid var(--gold); color: var(--gold); cursor: pointer; padding: 5px 10px;">
-                    Buy Hint (10 Runes)
+                    Buy Hint (150 Runes)
                 </button>
                 <p id="gate-hint-text" style="color: #aaa; font-style: italic; margin-top: 10px; display: none;"></p>
             </div>
@@ -88,9 +110,14 @@
             <span class="hud-label">Vitality</span>
             <span id="health-text" class="hud-value">100</span>
         </div>
+
         <div class="hud-item">
-            <span class="hud-label">Asgardian Runes</span>
-            <span id="coin-text" class="hud-value">0</span>
+            <span class="hud-label">Runes</span>
+            <span id="score-text" class="hud-value">0</span>
+        </div>
+        <div class="hud-item" onclick="openLeaderboard()" style="cursor: pointer;">
+            <span class="hud-label">Hall of</span>
+            <span class="hud-value" style="color: var(--gold);">Heroes</span>
         </div>
         <div class="hud-item">
             <span class="hud-label">Relic</span>
@@ -118,6 +145,26 @@
         </div>
     </div>
 
+    <!-- Leaderboard Modal -->
+    <div id="leaderboard-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeLeaderboard()">&times;</span>
+            <h2 style="text-align: center;">Hall of Heroes</h2>
+            <div id="leaderboard-loading" style="text-align: center; color: var(--gold);">Communing with the Norns...
+            </div>
+            <table class="leaderboard-table" id="leaderboard-table" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>Hero</th>
+                        <th>Runes</th>
+                        <th>Realm</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboard-body"></tbody>
+            </table>
+        </div>
+    </div>
+
     <canvas id="gameCanvas"></canvas>
 
     <!-- Image assets -->
@@ -136,7 +183,125 @@
         <img id="potion-img" src="potion1.png" alt="health potion">
     </div>
 
-    <script>
+    <script type="module">
+
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAPnWpytVCOF5UfryHEDCVe0fEs-Vx1xSE",
+            authDomain: "loki-2dcab.firebaseapp.com",
+            projectId: "loki-2dcab",
+            storageBucket: "loki-2dcab.firebasestorage.app",
+            messagingSenderId: "710391143408",
+            appId: "1:710391143408:web:48667f1adfddbff5a15b35"
+        };
+
+        let db;
+        let isFirebaseInitialized = false;
+
+        try {
+            // Check if coordinates have been replaced (they look like they have!)
+            if (firebaseConfig.apiKey.startsWith("AIza")) {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                isFirebaseInitialized = true;
+                console.log("Firebase initialized successfully");
+            }
+        } catch (e) {
+            console.error("Firebase initialization failed:", e);
+        }
+
+
+
+        window.openLeaderboard = async function () {
+            document.getElementById('leaderboard-modal').style.display = 'flex';
+            document.getElementById('leaderboard-loading').style.display = 'block';
+            document.getElementById('leaderboard-table').style.display = 'none';
+            isPaused = true;
+
+            if (!isFirebaseInitialized) {
+                // Show mock data if Firebase is not setup
+                setTimeout(() => {
+                    const mockData = [
+                        { name: "Loki", score: 15400, realm: 9 },
+                        { name: "Sylvie", score: 12200, realm: 7 },
+                        { name: "Mobius", score: 8500, realm: 5 },
+                        { name: "Thor", score: 5000, realm: 3 },
+                        { name: "Odin", score: 3000, realm: 2 }
+                    ];
+                    const body = document.getElementById('leaderboard-body');
+                    body.innerHTML = mockData.map(d => `<tr><td>${d.name}</td><td>${d.score}</td><td>${d.realm}</td></tr>`).join('');
+                    document.getElementById('leaderboard-loading').style.display = 'none';
+                    document.getElementById('leaderboard-table').style.display = 'table';
+                }, 800);
+                return;
+            }
+
+            try {
+                const q = query(collection(db, "leaderboard"), orderBy("score", "desc"), limit(10));
+                const querySnapshot = await getDocs(q);
+                const body = document.getElementById('leaderboard-body');
+                body.innerHTML = "";
+
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const row = `<tr>
+                        <td>${data.name}</td>
+                        <td>${data.score}</td>
+                        <td>${data.realm}</td>
+                    </tr>`;
+                    body.innerHTML += row;
+                });
+
+                document.getElementById('leaderboard-loading').style.display = 'none';
+                document.getElementById('leaderboard-table').style.display = 'table';
+            } catch (e) {
+                console.error("Error fetching leaderboard:", e);
+                document.getElementById('leaderboard-loading').textContent = "Failed to load the Hall of Heroes.";
+            }
+        };
+
+        window.closeLeaderboard = function () {
+            document.getElementById('leaderboard-modal').style.display = 'none';
+            isPaused = false;
+            render();
+        };
+
+        window.submitScore = async function () {
+            if (!isFirebaseInitialized) {
+                showNotification("Firebase not configured. Score not saved locally.");
+                document.getElementById('score-submit-container').style.display = 'none';
+                openLeaderboard();
+                return;
+            }
+
+            const name = document.getElementById('player-name').value.trim() || "Anonymous Hero";
+            const score = player.totalScore;
+            const realm = level;
+
+            const btn = document.getElementById('submit-score-btn');
+            btn.disabled = true;
+            btn.textContent = "Recording...";
+
+            try {
+                await addDoc(collection(db, "leaderboard"), {
+                    name: name,
+                    score: score,
+                    realm: realm,
+                    timestamp: new Date()
+                });
+                showNotification("Your legend has been recorded!");
+                document.getElementById('score-submit-container').style.display = 'none';
+                openLeaderboard();
+            } catch (e) {
+                console.error("Error submitting score:", e);
+                showNotification("The Norns rejected your score.");
+                btn.disabled = false;
+                btn.textContent = "Try Again";
+            }
+        };
 
         var currentGateAnswer = "";
         var currentGateHint = "";
@@ -172,11 +337,18 @@
             msgEl.textContent = text;
             screen.style.display = 'flex';
 
+            // Show score submission
+            document.getElementById('final-score').textContent = player.totalScore;
+            document.getElementById('score-submit-container').style.display = 'flex';
+
+            // Pre-fill name from localStorage
+            const savedName = localStorage.getItem('loki_player_name') || "";
+            document.getElementById('player-name').value = savedName;
+
             // Stop background music
             music.pause();
-            // Play game over music
             const goMusic = document.getElementById('gameover-music');
-            if (goMusic) {
+            if (goMusic && goMusic.paused) {
                 goMusic.currentTime = 0;
                 goMusic.play().catch(e => console.log("Game over music failed to play:", e));
             }
@@ -355,7 +527,6 @@
                     if (map[y][x] === wallChar) {
                         ctx.fillStyle = WALL_COLOR;
                         ctx.fillRect(tileX, tileY, TILE_SIZE, TILE_SIZE);
-                        // Add some "stone" detail
                         ctx.strokeStyle = '#0e2e15';
                         ctx.strokeRect(tileX + 4, tileY + 4, TILE_SIZE - 8, TILE_SIZE - 8);
                     } else {
@@ -383,11 +554,10 @@
                 if (e.type === 'boss') sprite = assets.enemy3;
 
                 ctx.drawImage(sprite, e.x * TILE_SIZE, e.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-                // Health bar and level
                 ctx.fillStyle = "rgba(0,0,0,0.5)";
                 ctx.fillRect(e.x * TILE_SIZE, e.y * TILE_SIZE - 10, TILE_SIZE, 5);
                 ctx.fillStyle = e.confused ? "#00ff41" : "#ff0000";
-                if (e.type === 'boss') ctx.fillStyle = "#aa00ff"; // Purple bar for boss
+                if (e.type === 'boss') ctx.fillStyle = "#aa00ff";
                 ctx.fillRect(e.x * TILE_SIZE, e.y * TILE_SIZE - 10, (e.health / e.maxHealth) * TILE_SIZE, 5);
 
                 ctx.fillStyle = "white";
@@ -399,20 +569,20 @@
                     ctx.fillText("?", e.x * TILE_SIZE + TILE_SIZE / 2, e.y * TILE_SIZE + TILE_SIZE / 2);
                 }
             });
-            // Draw Hero with Animation logic
             let heroSprite;
             if (isMoving) {
                 heroSprite = assets.heroRun[heroAnimationFrame];
             } else {
                 heroSprite = player.hasWeapon ? assets.heroIdleWeapon : assets.heroIdleNoWeapon;
             }
-            if (!heroSprite) heroSprite = assets.heroIdleNoWeapon; // Fallback
+            if (!heroSprite) heroSprite = assets.heroIdleNoWeapon;
             ctx.drawImage(heroSprite, player.x * TILE_SIZE, player.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
 
             // Update HUD
             document.getElementById('level-text').textContent = level;
             document.getElementById('health-text').textContent = player.health;
-            document.getElementById('coin-text').textContent = player.coins;
+            document.getElementById('score-text').textContent = player.totalScore || 0;
+
             let weaponText = 'Unarmed';
             if (player.hasWeapon) {
                 weaponText = `Twin Daggers (${player.weaponDurability})`;
@@ -517,13 +687,13 @@
             }
         }
 
-        function closeMischief() {
+        window.closeMischief = function () {
             document.getElementById('mischief-modal').style.display = 'none';
             isPaused = false;
             render();
         }
 
-        async function submitMischief() {
+        window.submitMischief = async function () {
             const text = document.getElementById('mischief-input').value;
             if (!text.trim()) return;
 
@@ -570,12 +740,12 @@
                 console.error(err);
             }
         }
-        function openCredits() {
+        window.openCredits = function () {
             document.getElementById('credits-modal').style.display = 'flex';
             isPaused = true;
         }
 
-        function closeCredits() {
+        window.closeCredits = function () {
             document.getElementById('credits-modal').style.display = 'none';
             isPaused = false;
             render();
@@ -624,16 +794,25 @@
             isPaused = false;
 
             if (combatEnemyIndex !== -1 && won) {
+                const enemy = enemies[combatEnemyIndex];
                 // Victory logic
                 enemies.splice(combatEnemyIndex, 1);
-                player.coins += 10;
+
+                // Reward based on enemy type
+                let reward = 10;
+                let scoreGain = 100;
+                if (enemy.type === 'elite') { reward = 25; scoreGain = 250; }
+                if (enemy.type === 'boss') { reward = 100; scoreGain = 1000; }
+
+                player.coins += reward;
+                player.totalScore += scoreGain;
+                showNotification(`Foe Vanquished! +${scoreGain} Score`);
+
                 player.weaponDurability--;
                 if (player.weaponDurability <= 0) player.hasWeapon = false;
 
-                // Process a turn for safety (enemies might move after a fight)
                 processEnemyTurns();
             } else if (combatEnemyIndex !== -1 && !won) {
-                // Defeat logic
                 player.health = 0;
                 playCutscene('scene/death.mp4', () => {
                     showDeathScreen("You fell in battle. The Valkyries did not come.");
@@ -658,6 +837,7 @@
                 x: 1, y: 1,
                 health: player.health || 100,
                 coins: player.coins || 0,
+                totalScore: player.totalScore || 0,
                 hasWeapon: player.hasWeapon || false,
                 weaponDurability: player.weaponDurability || 0
             };
@@ -732,13 +912,17 @@
 
             collectibles.forEach((c, index) => {
                 if (player.x === c.x && player.y === c.y) {
-                    if (c.type === 'coin') player.coins++;
+                    if (c.type === 'coin') {
+                        player.totalScore += 100;
+                    }
                     if (c.type === 'weapon') {
                         player.hasWeapon = true;
                         player.weaponDurability = 10 + level;
+                        player.totalScore += 50;
                     }
                     if (c.type === 'potion') {
                         player.health = 100;
+                        player.totalScore += 25;
                         playCutscene('scene/health.mp4');
                     }
                     collectibles.splice(index, 1);
@@ -806,6 +990,8 @@
                 if (selectedOption === currentGateAnswer) {
                     feedbackEl.textContent = "Correct. You may pass.";
                     feedbackEl.style.color = "#00ff41";
+                    player.totalScore += 500;
+                    showNotification("Level Cleared! +500 Score");
                     setTimeout(() => {
                         document.getElementById('gatekeeper-modal').style.display = 'none';
                         isPaused = false;
@@ -815,9 +1001,14 @@
                 } else {
                     feedbackEl.textContent = "Incorrect. The Bifrost remains closed.";
                     feedbackEl.style.color = "#ff4141";
-                    // Penalty: maybe take 5 health?
                     player.health -= 5;
                     document.getElementById('health-text').textContent = player.health;
+                    if (player.health <= 0) {
+                        player.health = 0;
+                        playCutscene('scene/death.mp4', () => {
+                            showDeathScreen("The Gatekeeper's judgement was final. You are no more.");
+                        });
+                    }
                 }
             };
 
@@ -825,18 +1016,16 @@
                 const hintText = document.getElementById('gate-hint-text');
                 const hintBtn = document.getElementById('hint-btn');
 
-                if (player.coins >= 10) {
-                    player.coins -= 10;
-                    document.getElementById('coin-text').textContent = player.coins;
+                if (player.totalScore >= 150) {
+                    player.totalScore -= 150;
+                    document.getElementById('score-text').textContent = player.totalScore;
                     hintText.textContent = "Hint: " + currentGateHint;
                     hintText.style.display = 'block';
-                    hintBtn.style.display = 'none'; // Hide button after purchase
+                    hintBtn.style.display = 'none';
                 } else {
-                    showNotification("You do not have enough Runes!");
+                    showNotification("You do not have enough Runes! (Need 150)");
                 }
             };
-
-            // Ensure this is defined globally so the button can see it
 
             if (player.health <= 0) {
                 player.health = 0;
@@ -877,6 +1066,24 @@
             }
         });
 
+        // --- CONSOLE CHEATS ---
+        // Access these via the browser's Developer Console (F12)
+        window.addRunes = (amount) => {
+            if (typeof amount !== 'number') return "Please provide a number (e.g., addRunes(1000))";
+            player.totalScore = (player.totalScore || 0) + amount;
+            render();
+            showNotification(`Runes Granted: +${amount}`);
+            return `New Balance: ${player.totalScore} Runes`;
+        };
+
+        window.setRunes = (amount) => {
+            if (typeof amount !== 'number') return "Please provide a number (e.g., setRunes(5000))";
+            player.totalScore = amount;
+            render();
+            return `Projected Balance: ${player.totalScore} Runes`;
+        };
+
+
         function spawnPotionNextToPlayer() {
             // Look at adjacent tiles (Up, Down, Left, Right)
             const directions = [
@@ -907,9 +1114,19 @@
             const modal = document.getElementById('cutscene-modal');
             const video = document.getElementById('cutscene-video');
 
+            if (music) music.pause();
+
             isPaused = true;
             modal.style.display = 'flex';
             video.src = videoPath;
+
+            if (videoPath.includes('death.mp4')) {
+                const goMusic = document.getElementById('gameover-music');
+                if (goMusic) {
+                    goMusic.currentTime = 0;
+                    goMusic.play().catch(e => console.log("Game over music failed to play during cutscene:", e));
+                }
+            }
 
             video.play().catch(e => {
                 console.log("Autoplay prevented, trying mute", e);
@@ -921,6 +1138,12 @@
                 modal.style.display = 'none';
                 video.pause();
                 video.src = "";
+
+                // Resume BGM if not a death cutscene
+                if (music && !videoPath.includes('death.mp4')) {
+                    playMusicWithRetry();
+                }
+
                 if (callback) {
                     callback();
                 } else {
@@ -932,6 +1155,11 @@
             video.onerror = () => {
                 console.error("Video failed to load:", videoPath);
                 modal.style.display = 'none';
+
+                if (music && !videoPath.includes('death.mp4')) {
+                    playMusicWithRetry();
+                }
+
                 if (callback) {
                     callback();
                 } else {
@@ -941,12 +1169,34 @@
             };
         }
 
-        function playHowTo() {
+        window.playHowTo = function () {
             playCutscene('scene/rules.mp4');
         }
 
-        window.onload = () => {
+        window.startGameWithName = function () {
+            const nameInput = document.getElementById('initial-player-name');
+            const name = nameInput.value.trim() || "Anonymous Hero";
+            localStorage.setItem('loki_player_name', name);
+            document.getElementById('name-modal').style.display = 'none';
+            isPaused = false;
+            playMusicWithRetry();
+
             if (!localStorage.getItem('lokiRulesWatched')) {
+                playCutscene('scene/rules.mp4', () => {
+                    localStorage.setItem('lokiRulesWatched', 'true');
+                    startLevel();
+                });
+            } else {
+                startLevel();
+            }
+        };
+
+        window.onload = () => {
+            const savedName = localStorage.getItem('loki_player_name');
+            if (!savedName) {
+                document.getElementById('name-modal').style.display = 'flex';
+                isPaused = true;
+            } else if (!localStorage.getItem('lokiRulesWatched')) {
                 playCutscene('scene/rules.mp4', () => {
                     localStorage.setItem('lokiRulesWatched', 'true');
                     startLevel();

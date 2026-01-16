@@ -433,3 +433,84 @@
             color: #000;
             box-shadow: 0 0 40px #f00;
         }
+
+        /* Leaderboard Styles */
+        #leaderboard-modal .modal-content {
+            height: auto;
+            max-height: 85vh;
+            overflow-y: auto;
+            width: 500px;
+            margin: 5vh auto;
+        }
+
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.2em;
+        }
+
+        .leaderboard-table th {
+            color: var(--gold);
+            border-bottom: 2px solid var(--gold);
+            padding: 10px;
+            text-align: left;
+            text-transform: uppercase;
+            font-family: 'Cinzel', serif;
+        }
+
+        .leaderboard-table td {
+            padding: 12px 10px;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+            color: #ccc;
+        }
+
+        .leaderboard-table tr:nth-child(1) td {
+            color: #fff;
+            text-shadow: 0 0 10px var(--gold);
+            font-weight: bold;
+        }
+
+        .leaderboard-table tr:nth-child(2) td {
+            color: #e5e4e2;
+        }
+
+        .leaderboard-table tr:nth-child(3) td {
+            color: #cd7f32;
+        }
+
+        #score-submit-container {
+            margin-top: 20px;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 20px;
+            border: 1px solid var(--gold);
+            border-radius: 10px;
+            backdrop-filter: blur(5px);
+        }
+
+        #score-submit-container h3 {
+            margin: 0;
+            color: var(--gold);
+            font-family: 'Cinzel', serif;
+        }
+
+        #score-submit-container input {
+            background: #000;
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            padding: 10px;
+            font-family: 'Cinzel', serif;
+            text-align: center;
+            font-size: 1.1em;
+            outline: none;
+            width: 200px;
+        }
+
+        #score-submit-container input:focus {
+            box-shadow: 0 0 10px var(--gold);
+        }
