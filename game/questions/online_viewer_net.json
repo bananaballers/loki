@@ -1,0 +1,79 @@
+[
+  {
+    "question": "What is the name of the bridge connecting Midgard to Asgard?",
+    "options": [
+      "Bifrost",
+      "Rainbow Road",
+      "The Gauntlet",
+      "Yggdrasil"
+    ],
+    "answer": "Bifrost",
+    "hint": "It is also known as the Rainbow Bridge."
+  },
+  {
+    "question": "Who is Loki's biological father?",
+    "options": [
+      "Odin",
+      "Laufey",
+      "Thor",
+      "Bor"
+    ],
+    "answer": "Laufey",
+    "hint": "He was the King of the Frost Giants."
+  },
+  {
+    "question": "What is the name of Thor's hammer?",
+    "options": [
+      "Stormbreaker",
+      "Gungnir",
+      "Mjolnir",
+      "Hofud"
+    ],
+    "answer": "Mjolnir",
+    "hint": "It was forged by the dwarves Brokkr and Eitri."
+  },
+  {
+    "question": "Which creature gnaws at the roots of the world tree, Yggdrasil?",
+    "options": [
+      "Fenrir",
+      "Nidhogg",
+      "Jormungandr",
+      "Ratatoskr"
+    ],
+    "answer": "Nidhogg",
+    "hint": "It is a monstrous dragon or serpent."
+  },
+  {
+    "question": "How many realms are connected by the world tree Yggdrasil?",
+    "options": [
+      "Seven",
+      "Twelve",
+      "Nine",
+      "Three"
+    ],
+    "answer": "Nine",
+    "hint": "Think of a single-digit odd number higher than seven."
+  },
+  {
+    "question": "What did Odin sacrifice to drink from the Well of Mimir?",
+    "options": [
+      "His right hand",
+      "His eye",
+      "His voice",
+      "His memories"
+    ],
+    "answer": "His eye",
+    "hint": "He gave it up to gain cosmic wisdom."
+  },
+  {
+    "question": "Which god is known as the 'Watchman of the Gods'?",
+    "options": [
+      "Tyr",
+      "Heimdall",
+      "Baldur",
+      "Vidar"
+    ],
+    "answer": "Heimdall",
+    "hint": "He possesses keen eyesight and hearing, guarding the Bifrost."
+  }
+]
