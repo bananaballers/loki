@@ -104,6 +104,10 @@
             <span class="hud-label">Info</span>
             <span class="hud-value" style="color: var(--gold);">Credits</span>
         </div>
+        <div class="hud-item" onclick="playHowTo()" style="cursor: pointer;">
+            <span class="hud-label">Instructions</span>
+            <span class="hud-value" style="color: var(--gold);">How to Play</span>
+        </div>
     </div>
 
     <!-- Credits Modal -->
@@ -937,8 +941,19 @@
             };
         }
 
+        function playHowTo() {
+            playCutscene('scene/rules.mp4');
+        }
+
         window.onload = () => {
-            startLevel();
+            if (!localStorage.getItem('lokiRulesWatched')) {
+                playCutscene('scene/rules.mp4', () => {
+                    localStorage.setItem('lokiRulesWatched', 'true');
+                    startLevel();
+                });
+            } else {
+                startLevel();
+            }
         };
     </script>
 
