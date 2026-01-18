@@ -1,5 +1,7 @@
 # Loki: The Trickster's Trial - Feature Ideas
 (ai)
+
+7 -10 is good 
 This document tracks potential features and enhancements for the Loki game.
 
 ## 1. Shapeshifting (The Ultimate Deception)
