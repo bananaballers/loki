@@ -112,7 +112,11 @@
     <div id="top-hud">
         <div class="hud-item" title="Current Realm">
             <span class="hud-label">Realm</span>
-            <span id="level-text" class="hud-value">1</span>
+            <div style="display: flex; flex-direction: column; align-items: center;">
+                <span id="level-text" class="hud-value">1</span>
+                <span id="quirk-text"
+                    style="font-size: 0.8em; color: var(--glitch-green); text-transform: uppercase; letter-spacing: 1px; font-weight: bold; margin-top: 5px; text-shadow: 0 0 10px var(--glitch-green);"></span>
+            </div>
         </div>
         <div class="hud-item" title="Vitality">
             <span class="hud-label">Health</span>
@@ -419,13 +423,13 @@
             window.requestAnimationFrame(step);
         }
 
-        function drawVignette() {
+        function drawVignette(innerRadius = 2, outerRadius = 8, opacity = 0.85) {
             const vignette = ctx.createRadialGradient(
-                player.x * TILE_SIZE + TILE_SIZE / 2, player.y * TILE_SIZE + TILE_SIZE / 2, TILE_SIZE * 2,
-                player.x * TILE_SIZE + TILE_SIZE / 2, player.y * TILE_SIZE + TILE_SIZE / 2, TILE_SIZE * 8
+                player.x * TILE_SIZE + TILE_SIZE / 2, player.y * TILE_SIZE + TILE_SIZE / 2, TILE_SIZE * innerRadius,
+                player.x * TILE_SIZE + TILE_SIZE / 2, player.y * TILE_SIZE + TILE_SIZE / 2, TILE_SIZE * outerRadius
             );
             vignette.addColorStop(0, 'rgba(0,0,0,0)');
-            vignette.addColorStop(1, 'rgba(0,0,0,0.85)');
+            vignette.addColorStop(1, `rgba(0,0,0,${opacity})`);
             ctx.fillStyle = vignette;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
@@ -464,6 +468,17 @@
         }
 
         const realms = ["Midgard", "Alfheim", "Asgard", "Jotunheim", "Vanaheim", "Nidavellir", "Muspelheim", "Niflheim", "Helheim"];
+        const realmStyles = {
+            "Midgard": { wall: '#0a210f', floor: '#061208', border: '#0e2e15', quirk: 'Lucky (Bonus Runes)' },
+            "Alfheim": { wall: '#f0f4f8', floor: '#061208', border: '#a5b1c2', quirk: 'Radiant (High Visibility)' },
+            "Asgard": { wall: '#d4af37', floor: '#061208', border: '#8c6d1f', quirk: 'Armory (Extra Daggers)' },
+            "Jotunheim": { wall: '#00d4ff', floor: '#061208', border: '#0099cc', quirk: 'Slippery (Ice Slide)' },
+            "Vanaheim": { wall: '#004d26', floor: '#061208', border: '#003319', quirk: 'Mystical (Extra Potions)' },
+            "Nidavellir": { wall: '#3d3d3d', floor: '#061208', border: '#262626', quirk: 'Hardened (Durable Daggers)' },
+            "Muspelheim": { wall: '#ff4141', floor: '#061208', border: '#800000', quirk: 'Inferno (Swarms)' },
+            "Niflheim": { wall: '#7f8c8d', floor: '#061208', border: '#95a5a6', quirk: 'Misty (Low Visibility)' },
+            "Helheim": { wall: '#1a1a1a', floor: '#061208', border: '#333333', quirk: 'Cursed (Blindness)' }
+        };
 
         async function nextLevel() {
             const realmName = realms[(level) % realms.length];
@@ -510,8 +525,9 @@
         const floorChar = ' ';
         const exitChar = '>';
 
-        const WALL_COLOR = '#0a210f'; // Deep jungle green
-        const FLOOR_COLOR = '#051208'; // Almost black green
+        let WALL_COLOR = '#0a210f';
+        let FLOOR_COLOR = '#051208';
+        let BORDER_COLOR = '#0e2e15';
         const RUNE_GLOW = '#d4af37';
 
         // --- ASSET MANAGEMENT ---
@@ -600,7 +616,8 @@
             emptyTiles.sort(() => Math.random() - 0.5);
 
             // More enemies!
-            const baseEnemyCount = 2 + (level * 2);
+            const realmName = realms[(level - 1) % realms.length];
+            const baseEnemyCount = (realmName === "Muspelheim" ? 4 : 2) + (level * 2);
             for (let i = 0; i < baseEnemyCount && emptyTiles.length > 0; i++) {
                 const pos = emptyTiles.pop();
 
@@ -610,6 +627,8 @@
                 let img = 'enemy.png';
 
                 const roll = Math.random();
+                const realmName = realms[(level - 1) % realms.length];
+
                 if (level >= 3 && roll > 0.85) {
                     enemyLevel = 3;
                     type = 'boss';
@@ -618,6 +637,8 @@
                     enemyLevel = 2;
                     type = 'elite';
                     img = 'enemy2.png';
+                } else if (realmName === "Muspelheim") {
+                    // Muspelheim quirk: More elites/aggressive spawning handled in count below
                 }
 
                 // Stats based on fixed level
@@ -652,13 +673,15 @@
                 collectibles.push({ x: pos.x, y: pos.y, type: 'coin' });
             }
 
-            if (emptyTiles.length > 0) {
+            const weaponCount = (realmName === "Asgard" ? 2 : 1);
+            for (let i = 0; i < weaponCount && emptyTiles.length > 0; i++) {
                 const pos = emptyTiles.pop();
                 collectibles.push({ x: pos.x, y: pos.y, type: 'weapon' });
             }
 
-            // Health Potion Spawn (30% chance)
-            if (Math.random() < 0.3 && emptyTiles.length > 0) {
+            // Health Potion Spawn (Increase chance in Vanaheim)
+            const potionChance = (realmName === "Vanaheim" ? 0.7 : 0.3);
+            if (Math.random() < potionChance && emptyTiles.length > 0) {
                 const pos = emptyTiles.pop();
                 collectibles.push({ x: pos.x, y: pos.y, type: 'potion' });
             }
@@ -675,6 +698,13 @@
         function render() {
             try {
                 if (!map || map.length === 0) return;
+                const realmName = realms[(level - 1) % realms.length];
+                const currentStyle = realmStyles[realmName];
+
+                // Set Realm Colors
+                WALL_COLOR = currentStyle.wall;
+                FLOOR_COLOR = currentStyle.floor;
+                BORDER_COLOR = currentStyle.border;
 
                 canvas.width = mazeWidth * TILE_SIZE;
                 canvas.height = mazeHeight * TILE_SIZE;
@@ -708,7 +738,8 @@
                             grad.addColorStop(1, '#051208');
                             ctx.fillStyle = grad;
                             ctx.fillRect(tileX, tileY, TILE_SIZE, TILE_SIZE);
-                            ctx.strokeStyle = '#0e2e15';
+                            ctx.strokeRect(tileX + 4, tileY + 4, TILE_SIZE - 8, TILE_SIZE - 8);
+                            ctx.strokeStyle = BORDER_COLOR;
                             ctx.strokeRect(tileX + 4, tileY + 4, TILE_SIZE - 8, TILE_SIZE - 8);
                         } else {
                             ctx.fillStyle = FLOOR_COLOR;
@@ -827,13 +858,23 @@
                     ctx.fill();
                 }
 
-                // Final UI Overlays (Restored from shake/camera)
-                ctx.restore();
+                // Realm Effects
+                if (realmName === "Helheim") {
+                    drawVignette(2, 6, 0.95);
+                } else if (realmName === "Niflheim") {
+                    drawVignette(4, 10, 0.7);
+                }
 
-                // drawVignette(); // Call this here for "blindness" or "darkness" levels if needed
+                // Realm Effects
+                if (realmName === "Helheim") {
+                    drawVignette(2, 6, 0.98); // Thicker blindness
+                } else if (realmName === "Niflheim") {
+                    drawVignette(4, 10, 0.7);
+                }
 
-                const realmName = realms[(level - 1) % realms.length];
                 document.getElementById('level-text').textContent = `${realmName} (${level})`;
+                const quirkEl = document.getElementById('quirk-text');
+                if (quirkEl) quirkEl.textContent = currentStyle.quirk.split(' (')[0];
                 document.getElementById('health-text').textContent = player.health;
 
                 const oldScore = parseInt(document.getElementById('score-text').textContent);
@@ -1187,8 +1228,26 @@
 
             const isEnemy = enemies.some(e => e.x === newX && e.y === newY);
             if (map[newY] && map[newY][newX] !== wallChar && !isEnemy) {
+                const dx = newX - player.x;
+                const dy = newY - player.y;
+
                 player.x = newX;
                 player.y = newY;
+
+                // Jotunheim Ice Quirk: Slide if moving on ice
+                const realmName = realms[(level - 1) % realms.length];
+                if (realmName === "Jotunheim") {
+                    let nextSlideX = player.x + dx;
+                    let nextSlideY = player.y + dy;
+                    const isSlideWall = map[nextSlideY] && map[nextSlideY][nextSlideX] === wallChar;
+                    const isSlideEnemy = enemies.some(e => e.x === nextSlideX && e.y === nextSlideY);
+                    const isSlideExit = map[nextSlideY] && map[nextSlideY][nextSlideX] === exitChar;
+
+                    if (map[nextSlideY] && !isSlideWall && !isSlideEnemy && !isSlideExit) {
+                        player.x = nextSlideX;
+                        player.y = nextSlideY;
+                    }
+                }
 
                 // Handle running animation
                 if (playerAction && (key === 'w' || key === 's' || key === 'a' || key === 'd')) {
@@ -1213,11 +1272,16 @@
             collectibles.forEach((c, index) => {
                 if (player.x === c.x && player.y === c.y) {
                     if (c.type === 'coin') {
-                        player.totalScore += 100;
+                        const realmName = realms[(level - 1) % realms.length];
+                        const bonus = (realmName === "Midgard" ? 200 : 100);
+                        player.totalScore += bonus;
+                        if (realmName === "Midgard") showNotification("Midgard's Blessing! +100 Lucky Bonus");
                     }
                     if (c.type === 'weapon') {
                         player.hasWeapon = true;
-                        player.weaponDurability = 10 + level;
+                        const realmName = realms[(level - 1) % realms.length];
+                        const durabilityBonus = (realmName === "Nidavellir" ? 10 : 0);
+                        player.weaponDurability = 10 + level + durabilityBonus;
                         player.totalScore += 50;
                     }
                     if (c.type === 'potion') {
