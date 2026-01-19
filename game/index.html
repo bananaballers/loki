@@ -203,6 +203,31 @@
         let db;
         let isFirebaseInitialized = false;
 
+        window.debugGame = function () {
+            console.log("--- LOKI GAME DEBUG ---");
+            console.log("Level:", level);
+            console.log("Player State:", player);
+            console.log("Enemies Count:", enemies.length);
+            console.log("Collectibles Count:", collectibles.length);
+            console.log("Is Paused:", isPaused);
+            console.log("Is Game Over:", isGameOver);
+            console.log("Canvas Size:", canvas.width, "x", canvas.height);
+            console.log("Assets Loaded Status:");
+            for (let key in assets) {
+                if (Array.isArray(assets[key])) {
+                    assets[key].forEach((img, i) => console.log(`  ${key}[${i}]: ${img.complete ? 'COMPLETE' : 'LOADING'} (${img.src})`));
+                } else {
+                    console.log(`  ${key}: ${assets[key] ? (assets[key].complete ? 'COMPLETE' : 'LOADING') : 'NULL'} (${assets[key]?.src})`);
+                }
+            }
+            return "Debug log finished.";
+        };
+
+        window.onerror = function (msg, url, line, col, error) {
+            console.error("GLOBAL GAME ERROR:", msg, "at", url, ":", line, ":", col, error);
+            return false;
+        };
+
         try {
             // Check if coordinates have been replaced (they look like they have!)
             if (firebaseConfig.apiKey.startsWith("AIza")) {
@@ -517,93 +542,133 @@
 
         // --- RENDER & UI ---
         function render() {
-            canvas.width = mazeWidth * TILE_SIZE;
-            canvas.height = mazeHeight * TILE_SIZE;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            try {
+                if (!map || map.length === 0) return;
 
-            // Draw Map
-            for (let y = 0; y < map.length; y++) {
-                for (let x = 0; x < map[y].length; x++) {
-                    const tileX = x * TILE_SIZE;
-                    const tileY = y * TILE_SIZE;
-                    if (map[y][x] === wallChar) {
-                        ctx.fillStyle = WALL_COLOR;
-                        ctx.fillRect(tileX, tileY, TILE_SIZE, TILE_SIZE);
-                        ctx.strokeStyle = '#0e2e15';
-                        ctx.strokeRect(tileX + 4, tileY + 4, TILE_SIZE - 8, TILE_SIZE - 8);
-                    } else {
-                        ctx.fillStyle = FLOOR_COLOR;
-                        ctx.fillRect(tileX, tileY, TILE_SIZE, TILE_SIZE);
-                        if (map[y][x] === exitChar) {
-                            ctx.fillStyle = '#C0C0C0';
-                            ctx.font = `bold ${TILE_SIZE * 0.8}px 'Cinzel'`;
-                            ctx.textAlign = 'center';
-                            ctx.textBaseline = 'middle';
-                            ctx.shadowBlur = 10;
-                            ctx.shadowColor = '#00ff41';
-                            ctx.fillText('Ω', tileX + TILE_SIZE / 2, tileY + TILE_SIZE / 2);
-                            ctx.shadowBlur = 0;
+                canvas.width = mazeWidth * TILE_SIZE;
+                canvas.height = mazeHeight * TILE_SIZE;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // Reset context state to defaults
+                ctx.textAlign = 'start';
+                ctx.textBaseline = 'alphabetic';
+                ctx.shadowBlur = 0;
+                ctx.globalAlpha = 1.0;
+
+                // Draw Map
+                for (let y = 0; y < map.length; y++) {
+                    for (let x = 0; x < map[y].length; x++) {
+                        const tileX = x * TILE_SIZE;
+                        const tileY = y * TILE_SIZE;
+                        if (map[y][x] === wallChar) {
+                            ctx.fillStyle = WALL_COLOR;
+                            ctx.fillRect(tileX, tileY, TILE_SIZE, TILE_SIZE);
+                            ctx.strokeStyle = '#0e2e15';
+                            ctx.strokeRect(tileX + 4, tileY + 4, TILE_SIZE - 8, TILE_SIZE - 8);
+                        } else {
+                            ctx.fillStyle = FLOOR_COLOR;
+                            ctx.fillRect(tileX, tileY, TILE_SIZE, TILE_SIZE);
+                            if (map[y][x] === exitChar) {
+                                ctx.save();
+                                ctx.fillStyle = '#C0C0C0';
+                                ctx.font = `bold ${TILE_SIZE * 0.8}px 'Cinzel'`;
+                                ctx.textAlign = 'center';
+                                ctx.textBaseline = 'middle';
+                                ctx.shadowBlur = 10;
+                                ctx.shadowColor = '#00ff41';
+                                ctx.fillText('Ω', tileX + TILE_SIZE / 2, tileY + TILE_SIZE / 2);
+                                ctx.restore();
+                            }
                         }
                     }
                 }
-            }
 
-            // Draw Assets
-            collectibles.forEach(c => ctx.drawImage(assets[c.type], c.x * TILE_SIZE, c.y * TILE_SIZE, TILE_SIZE, TILE_SIZE));
-            enemies.forEach(e => {
-                let sprite = assets.enemy;
-                if (e.type === 'elite') sprite = assets.enemy2;
-                if (e.type === 'boss') sprite = assets.enemy3;
+                // Draw Assets
+                collectibles.forEach(c => {
+                    if (assets[c.type]) {
+                        ctx.drawImage(assets[c.type], c.x * TILE_SIZE, c.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                    }
+                });
 
-                ctx.drawImage(sprite, e.x * TILE_SIZE, e.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-                ctx.fillStyle = "rgba(0,0,0,0.5)";
-                ctx.fillRect(e.x * TILE_SIZE, e.y * TILE_SIZE - 10, TILE_SIZE, 5);
-                ctx.fillStyle = e.confused ? "#00ff41" : "#ff0000";
-                if (e.type === 'boss') ctx.fillStyle = "#aa00ff";
-                ctx.fillRect(e.x * TILE_SIZE, e.y * TILE_SIZE - 10, (e.health / e.maxHealth) * TILE_SIZE, 5);
+                enemies.forEach(e => {
+                    let sprite = assets.enemy;
+                    if (e.type === 'elite') sprite = assets.enemy2;
+                    if (e.type === 'boss') sprite = assets.enemy3;
 
-                ctx.fillStyle = "white";
-                ctx.font = "10px Cinzel";
-                ctx.fillText(`Lvl ${e.level}`, e.x * TILE_SIZE, e.y * TILE_SIZE - 15);
+                    if (sprite && sprite.complete) {
+                        ctx.drawImage(sprite, e.x * TILE_SIZE, e.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                    } else {
+                        // Fallback if sprite not loaded
+                        ctx.fillStyle = "red";
+                        ctx.fillRect(e.x * TILE_SIZE, e.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                    }
 
-                if (e.confused) {
-                    ctx.fillStyle = "#00ff41";
-                    ctx.fillText("?", e.x * TILE_SIZE + TILE_SIZE / 2, e.y * TILE_SIZE + TILE_SIZE / 2);
+                    // HP Bar
+                    ctx.fillStyle = "rgba(0,0,0,0.5)";
+                    ctx.fillRect(e.x * TILE_SIZE, e.y * TILE_SIZE - 10, TILE_SIZE, 5);
+                    ctx.fillStyle = e.confused ? "#00ff41" : "#ff0000";
+                    if (e.type === 'boss') ctx.fillStyle = "#aa00ff";
+                    ctx.fillRect(e.x * TILE_SIZE, e.y * TILE_SIZE - 10, (e.health / e.maxHealth) * TILE_SIZE, 5);
+
+                    ctx.fillStyle = "white";
+                    ctx.font = "10px Cinzel";
+                    ctx.fillText(`Lvl ${e.level}`, e.x * TILE_SIZE, e.y * TILE_SIZE - 15);
+
+                    if (e.confused) {
+                        ctx.fillStyle = "#00ff41";
+                        ctx.fillText("?", e.x * TILE_SIZE + TILE_SIZE / 2, e.y * TILE_SIZE + TILE_SIZE / 2);
+                    }
+                });
+
+                let heroSprite;
+                if (isMoving) {
+                    heroSprite = assets.heroRun[heroAnimationFrame];
+                } else {
+                    heroSprite = player.hasWeapon ? assets.heroIdleWeapon : assets.heroIdleNoWeapon;
                 }
-            });
-            let heroSprite;
-            if (isMoving) {
-                heroSprite = assets.heroRun[heroAnimationFrame];
-            } else {
-                heroSprite = player.hasWeapon ? assets.heroIdleWeapon : assets.heroIdleNoWeapon;
-            }
-            if (!heroSprite) heroSprite = assets.heroIdleNoWeapon;
-            ctx.drawImage(heroSprite, player.x * TILE_SIZE, player.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
 
-            // Update HUD
-            document.getElementById('level-text').textContent = level;
-            document.getElementById('health-text').textContent = player.health;
-            document.getElementById('score-text').textContent = player.totalScore || 0;
+                if (!heroSprite) heroSprite = assets.heroIdleNoWeapon;
 
-            let weaponText = 'Unarmed';
-            if (player.hasWeapon) {
-                weaponText = `Twin Daggers (${player.weaponDurability})`;
-                document.getElementById('weapon-text').classList.add('ready-pulse');
-                document.getElementById('weapon-text').style.color = "#00ff41";
-            } else {
-                document.getElementById('weapon-text').classList.remove('ready-pulse');
-                document.getElementById('weapon-text').style.color = "#ff4141";
-            }
-            document.getElementById('weapon-text').textContent = weaponText;
+                if (heroSprite && heroSprite.complete) {
+                    ctx.drawImage(heroSprite, player.x * TILE_SIZE, player.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                } else {
+                    console.warn("Hero sprite not ready for level", level, "at", player.x, player.y);
+                    // Draw a placeholder if image is failing
+                    ctx.fillStyle = "gold";
+                    ctx.beginPath();
+                    ctx.arc(player.x * TILE_SIZE + TILE_SIZE / 2, player.y * TILE_SIZE + TILE_SIZE / 2, TILE_SIZE / 3, 0, Math.PI * 2);
+                    ctx.fill();
+                }
 
-            const mischiefEl = document.getElementById('mischief-status');
-            mischiefEl.textContent = mischiefUsed ? "Exhausted" : "Ready";
-            if (mischiefUsed) {
-                mischiefEl.style.color = "#ff4141";
-                mischiefEl.classList.remove('ready-pulse');
-            } else {
-                mischiefEl.style.color = "#00ff41";
-                mischiefEl.classList.add('ready-pulse');
+                // Update HUD
+                document.getElementById('level-text').textContent = level;
+                document.getElementById('health-text').textContent = player.health;
+                document.getElementById('score-text').textContent = player.totalScore || 0;
+
+                let weaponText = 'Unarmed';
+                if (player.hasWeapon) {
+                    weaponText = `Twin Daggers (${player.weaponDurability})`;
+                    document.getElementById('weapon-text').classList.add('ready-pulse');
+                    document.getElementById('weapon-text').style.color = "#00ff41";
+                } else {
+                    document.getElementById('weapon-text').classList.remove('ready-pulse');
+                    document.getElementById('weapon-text').style.color = "#ff4141";
+                }
+                document.getElementById('weapon-text').textContent = weaponText;
+
+                const mischiefEl = document.getElementById('mischief-status');
+                if (mischiefEl) {
+                    mischiefEl.textContent = mischiefUsed ? "Exhausted" : "Ready";
+                    if (mischiefUsed) {
+                        mischiefEl.style.color = "#ff4141";
+                        mischiefEl.classList.remove('ready-pulse');
+                    } else {
+                        mischiefEl.style.color = "#00ff41";
+                        mischiefEl.classList.add('ready-pulse');
+                    }
+                }
+            } catch (err) {
+                console.error("Render failure on level", level, ":", err);
             }
         }
 
@@ -830,10 +895,12 @@
 
         // --- GAME CONTROL ---
         function startLevel() {
+            console.log("Starting Level:", level);
             isGameOver = false;
             mischiefUsed = false;
             const width = 13 + (level * 2);
             const height = 9 + (level * 2);
+            console.log("Maze dimensions:", width, "x", height);
 
             player = {
                 x: 1, y: 1,
@@ -847,6 +914,7 @@
             map = generateMaze(width, height);
             populateMaze();
             render();
+            console.log("Level", level, "initialized. Player at:", player.x, player.y);
         }
 
         document.addEventListener('keydown', function (event) {

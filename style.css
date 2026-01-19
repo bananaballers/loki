@@ -45,6 +45,8 @@
             box-shadow: 0 0 30px rgba(212, 175, 55, 0.3), inset 0 0 20px rgba(0, 77, 38, 0.5);
             image-rendering: pixelated;
             max-width: 95vw;
+            display: block;
+            margin: 20px auto;
         }
 
         #hud {
