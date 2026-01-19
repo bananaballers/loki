@@ -1,79 +1,68 @@
 [
     {
-        "question": "What is the name of the bridge connecting Midgard to Asgard?",
+        "question": "What is Loki's MAIN power in Norse mythology?",
         "options": [
-            "Bifrost",
-            "Rainbow Road",
-            "The Gauntlet",
-            "Yggdrasil"
+            "shaking EXTREMELY fast",
+            "Shape-shifting",
+            "Invisibility",
+            "Flying with wings"
         ],
-        "answer": "Bifrost",
-        "hint": "It is also known as the Rainbow Bridge."
+        "answer": "Shape-shifting",
+        "hint": "He can turn into animals like a salmon, a seal, Tom Hiddleston, or a fly."
     },
     {
-        "question": "Who is Loki's biological father?",
+        "question": "Who are Loki's two most famous 'family members' in the myths?",
         "options": [
-            "Odin",
-            "Laufey",
-            "Thor",
-            "Bor"
+            "His DADDY Odin and brother Thor",
+            "His blood-brother Odin and friend Thor",
+            "His friends Zeus and Hercules",
+            "His MASTERS the Frost Giants"
         ],
-        "answer": "Laufey",
-        "hint": "He was the King of the Frost Giants."
+        "answer": "His blood-brother Odin and friend Thor",
+        "hint": "In the real myths, he is not Thor's brother by birth."
     },
     {
-        "question": "What is the name of Thor's hammer?",
+        "question": "Loki is the father of a giant serpent that lives in the ocean. What is its name?",
         "options": [
-            "Stormbreaker",
-            "Gungnir",
-            "Mjolnir",
-            "Hofud"
+            "Big Fat Tenticle",
+            "Jormungandr (The Midgard Serpent)",
+            "Nessie",
+            "Hydra"
         ],
-        "answer": "Mjolnir",
-        "hint": "It was forged by the dwarves Brokkr and Eitri."
+        "answer": "Jormungandr (The Midgard Serpent)",
+        "hint": "It is sooooo long that it circles the entire world."
     },
     {
-        "question": "Which creature gnaws at the roots of the world tree, Yggdrasil?",
+        "question": "Which of these did Loki NOT help create or find for the gods?",
         "options": [
-            "Fenrir",
-            "Nidhogg",
-            "Jormungandr",
-            "Ratatoskr"
+            "Thor's Hammer (Mjolnir)",
+            "Odin's Spear (Gungnir)",
+            "The Golden Hair of Sif",
+            "The Shield of Captain America"
         ],
-        "answer": "Nidhogg",
-        "hint": "It is a monstrous dragon or serpent."
+        "answer": "The Shield of Captain America",
+        "hint": "Think about which one doesn't belong in ancient history, YOU NERD!"
     },
     {
-        "question": "How many realms are connected by the world tree Yggdrasil?",
+        "question": "What tiny plant did Loki use to trick the gods and hurt Baldur?",
         "options": [
-            "Seven",
-            "Twelve",
-            "Nine",
-            "Three"
+            "Rose thorns",
+            "Poison Ivy",
+            "Mistletoe",
+            "Oak leaves"
         ],
-        "answer": "Nine",
-        "hint": "Think of a single-digit odd number higher than seven."
+        "answer": "Mistletoe",
+        "hint": "People usually get freaky under this plant during the holidays."
     },
     {
-        "question": "What did Odin sacrifice to drink from the Well of Mimir?",
+        "question": "Loki is often called the God of what?",
         "options": [
-            "His right hand",
-            "His eye",
-            "His voice",
-            "His memories"
+            "Thunder",
+            "Mischief",
+            "Love",
+            "War"
         ],
-        "answer": "His eye",
-        "hint": "He gave it up to gain cosmic wisdom."
-    },
-    {
-        "question": "Which god is known as the 'Watchman of the Gods'?",
-        "options": [
-            "Tyr",
-            "Heimdall",
-            "Baldur",
-            "Vidar"
-        ],
-        "answer": "Heimdall",
-        "hint": "He possesses keen eyesight and hearing, guarding the Bifrost."
+        "answer": "Mischief",
+        "hint": "He is known for playing tricks and being a BAD boy, GRRRRRR."
     }
 ]
