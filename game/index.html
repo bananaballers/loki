@@ -20,6 +20,13 @@
     </audio>
 
     <div id="notification-container"></div>
+    <div id="transition-overlay">
+        <h2 id="transition-realm-name">Entering the Void</h2>
+        <p id="transition-realm-desc"
+            style="color: #ccc; font-family: 'Cormorant Garamond'; font-style: italic; font-size: 1.4em; max-width: 600px; line-height: 1.6; margin-top: 20px;">
+        </p>
+        <p style="color: #666; font-family: 'Cinzel'; letter-spacing: 5px; margin-top: 30px;">Wait for the Norns</p>
+    </div>
 
     <div id="death-screen">
         <h1 id="death-title">YOU PERISHED</h1>
@@ -102,50 +109,72 @@
             <div id="mischief-result" class="mischief-result"></div>
         </div>
     </div>
-    <div id="hud">
-        <div class="hud-item">
-            <span class="hud-label">Realm Verse</span>
+    <div id="top-hud">
+        <div class="hud-item" title="Current Realm">
+            <span class="hud-label">Realm</span>
             <span id="level-text" class="hud-value">1</span>
         </div>
-        <div class="hud-item">
-            <span class="hud-label">Vitality</span>
-            <span id="health-text" class="hud-value">100</span>
+        <div class="hud-item" title="Vitality">
+            <span class="hud-label">Health</span>
+            <div class="hud-stat-group">
+                <span class="hud-icon">❤️</span>
+                <span id="health-text" class="hud-value">100</span>
+            </div>
         </div>
-
-        <div class="hud-item">
+        <div class="hud-item" title="Runes Collected">
             <span class="hud-label">Runes</span>
-            <span id="score-text" class="hud-value">0</span>
+            <div class="hud-stat-group">
+                <span class="hud-icon">✨</span>
+                <span id="score-text" class="hud-value">0</span>
+            </div>
         </div>
-
-        <div class="hud-item">
-            <span class="hud-label">Relic</span>
-            <span id="weapon-text" class="hud-value">Unarmed</span>
+        <div class="hud-item" title="Space Stone Fragments">
+            <span class="hud-label">Fragments</span>
+            <div class="hud-stat-group">
+                <span class="hud-icon" style="color: #00d4ff;">💎</span>
+                <span id="stone-text" class="hud-value" style="color: #00d4ff;">0</span>
+            </div>
         </div>
-        <div class="hud-item">
-            <span class="hud-label">Mischief</span>
-            <span id="mischief-status" class="hud-value">Ready</span>
-        </div>
-
-        <div class="hud-item" onclick="openLeaderboard()" style="cursor: pointer;">
-            <span class="hud-label">Hall of</span>
-            <span class="hud-value" style="color: var(--gold);">Heroes</span>
-        </div>
-        <div class="hud-item">
-            <span class="hud-label">Space Stones</span>
-            <span id="stone-text" class="hud-value" style="color: #00d4ff;">0</span>
-        </div>
-        <div class="hud-item">
+        <div class="hud-item" title="Available Portals (Press P)">
             <span class="hud-label">Portals</span>
-            <span id="portal-text" class="hud-value" style="color: #00ff41;">0</span>
+            <div class="hud-stat-group">
+                <span class="hud-icon" style="color: #00ff41;">🌀</span>
+                <span id="portal-text" class="hud-value" style="color: #00ff41;">0</span>
+            </div>
         </div>
-        <div class="hud-item" onclick="openCredits()" style="cursor: pointer;">
-            <span class="hud-label">Info</span>
-            <span class="hud-value" style="color: var(--gold);">Credits</span>
+        <div class="hud-item" title="Mischief Charges (Press 2)">
+            <span class="hud-label">Mischief</span>
+            <div class="hud-stat-group">
+                <span class="hud-icon">🎭</span>
+                <span id="mischief-status" class="hud-value">1</span>
+            </div>
         </div>
-        <div class="hud-item" onclick="playHowTo()" style="cursor: pointer;">
-            <span class="hud-label">Instructions</span>
-            <span class="hud-value" style="color: var(--gold);">How to Play</span>
+        <div class="hud-item" title="Dagger Durability (Press 1)">
+            <span class="hud-label">Daggers</span>
+            <div class="hud-stat-group">
+                <span class="hud-icon">🗡️</span>
+                <span id="weapon-text" class="hud-value">0</span>
+            </div>
         </div>
+    </div>
+
+    <div id="side-hud">
+        <button class="side-item" onclick="openLeaderboard()" title="Hall of Heroes">
+            <span class="side-icon">🏆</span>
+            <span class="side-label">Heroes</span>
+        </button>
+        <button class="side-item" onclick="playHowTo()" title="Instructions">
+            <span class="side-icon">❓</span>
+            <span class="side-label">Guide</span>
+        </button>
+        <button class="side-item" onclick="toggleGridView()" title="Toggle View Mode">
+            <span class="side-icon">👁️</span>
+            <span id="view-text-side" class="side-label">Standard</span>
+        </button>
+        <button class="side-item" onclick="openCredits()" title="Credits">
+            <span class="side-icon">📜</span>
+            <span class="side-label">Credits</span>
+        </button>
     </div>
 
     <!-- Credits Modal -->
@@ -365,6 +394,87 @@
             }, 3000);
         }
 
+        let canvasShake = { x: 0, y: 0, duration: 0 };
+
+        function triggerShake(duration = 20) {
+            canvasShake.duration = duration;
+        }
+
+        function animateValue(id, start, end, duration) {
+            if (start === end) return;
+            const obj = document.getElementById(id);
+            const range = end - start;
+            let startTime = null;
+
+            function step(timestamp) {
+                if (!startTime) startTime = timestamp;
+                const progress = Math.min((timestamp - startTime) / duration, 1);
+                obj.textContent = Math.floor(progress * range + start);
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                } else {
+                    obj.textContent = end;
+                }
+            }
+            window.requestAnimationFrame(step);
+        }
+
+        function drawVignette() {
+            const vignette = ctx.createRadialGradient(
+                player.x * TILE_SIZE + TILE_SIZE / 2, player.y * TILE_SIZE + TILE_SIZE / 2, TILE_SIZE * 2,
+                player.x * TILE_SIZE + TILE_SIZE / 2, player.y * TILE_SIZE + TILE_SIZE / 2, TILE_SIZE * 8
+            );
+            vignette.addColorStop(0, 'rgba(0,0,0,0)');
+            vignette.addColorStop(1, 'rgba(0,0,0,0.85)');
+            ctx.fillStyle = vignette;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        async function triggerLevelTransition(realmName) {
+            // Fetch realm descriptions
+            let realmDesc = "";
+            try {
+                const response = await fetch('questions/levels.json');
+                const descriptions = await response.json();
+                realmDesc = descriptions[realmName] || "";
+            } catch (err) {
+                console.error("Failed to load realm descriptions:", err);
+            }
+
+            return new Promise((resolve) => {
+                const overlay = document.getElementById('transition-overlay');
+                const realmText = document.getElementById('transition-realm-name');
+                const descText = document.getElementById('transition-realm-desc');
+
+                realmText.textContent = realmName || `Realm ${level}`;
+                descText.textContent = realmDesc;
+
+                overlay.style.display = 'flex';
+                setTimeout(() => overlay.classList.add('active'), 50);
+
+                // Extended time to read the description
+                setTimeout(() => {
+                    overlay.classList.remove('active');
+                    setTimeout(() => {
+                        overlay.style.display = 'none';
+                        resolve();
+                    }, 800);
+                }, 4000); // 4 seconds instead of 2
+            });
+        }
+
+        const realms = ["Midgard", "Alfheim", "Asgard", "Jotunheim", "Vanaheim", "Nidavellir", "Muspelheim", "Niflheim", "Helheim"];
+
+        async function nextLevel() {
+            const realmName = realms[(level) % realms.length];
+
+            isPaused = true;
+            await triggerLevelTransition(realmName);
+            level++;
+            startLevel();
+            isPaused = false;
+        }
+
         function showDeathScreen(text) {
             isGameOver = true;
             isPaused = true;
@@ -372,6 +482,7 @@
             const msgEl = document.getElementById('death-msg');
             msgEl.textContent = text;
             screen.style.display = 'flex';
+            screen.style.animation = 'fadeIn 2s forwards';
 
             // Show score submission
             document.getElementById('final-score').textContent = player.totalScore;
@@ -432,6 +543,7 @@
         let portals = []; // Placed portals
         let mazeWidth, mazeHeight;
         let isGameOver = false;
+        let isGridView = false; // Grid mode state
 
         // Animation state
         let heroAnimationFrame = 0;
@@ -551,8 +663,9 @@
                 collectibles.push({ x: pos.x, y: pos.y, type: 'potion' });
             }
 
-            // Space Stone Fragments (3 fragments per level)
-            for (let i = 0; i < 3 && emptyTiles.length > 0; i++) {
+            // Space Stone Fragments (3 fragments per level, but harder on Level 1)
+            const stonesToSpawn = (level === 1) ? 1 : 3;
+            for (let i = 0; i < stonesToSpawn && emptyTiles.length > 0; i++) {
                 const pos = emptyTiles.pop();
                 collectibles.push({ x: pos.x, y: pos.y, type: 'spaceStone' });
             }
@@ -566,6 +679,7 @@
                 canvas.width = mazeWidth * TILE_SIZE;
                 canvas.height = mazeHeight * TILE_SIZE;
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.save(); // Save state for whole render pass
 
                 // Reset context state to defaults
                 ctx.textAlign = 'start';
@@ -573,13 +687,26 @@
                 ctx.shadowBlur = 0;
                 ctx.globalAlpha = 1.0;
 
+                // Apply Screen Shake
+                if (canvasShake.duration > 0) {
+                    const intensity = 5;
+                    canvasShake.x = (Math.random() - 0.5) * intensity;
+                    canvasShake.y = (Math.random() - 0.5) * intensity;
+                    ctx.translate(canvasShake.x, canvasShake.y);
+                    canvasShake.duration--;
+                }
+
                 // Draw Map
                 for (let y = 0; y < map.length; y++) {
                     for (let x = 0; x < map[y].length; x++) {
                         const tileX = x * TILE_SIZE;
                         const tileY = y * TILE_SIZE;
                         if (map[y][x] === wallChar) {
-                            ctx.fillStyle = WALL_COLOR;
+                            // Wall Gradient
+                            const grad = ctx.createLinearGradient(tileX, tileY, tileX + TILE_SIZE, tileY + TILE_SIZE);
+                            grad.addColorStop(0, WALL_COLOR);
+                            grad.addColorStop(1, '#051208');
+                            ctx.fillStyle = grad;
                             ctx.fillRect(tileX, tileY, TILE_SIZE, TILE_SIZE);
                             ctx.strokeStyle = '#0e2e15';
                             ctx.strokeRect(tileX + 4, tileY + 4, TILE_SIZE - 8, TILE_SIZE - 8);
@@ -594,7 +721,9 @@
                                 ctx.textBaseline = 'middle';
                                 ctx.shadowBlur = 10;
                                 ctx.shadowColor = '#00ff41';
-                                ctx.fillText('Ω', tileX + TILE_SIZE / 2, tileY + TILE_SIZE / 2);
+                                // Animated Exit
+                                const pulseOffset = Math.sin(Date.now() / 300) * 5;
+                                ctx.fillText('Ω', tileX + TILE_SIZE / 2, tileY + TILE_SIZE / 2 + pulseOffset);
                                 ctx.restore();
                             }
                         }
@@ -613,11 +742,15 @@
                         ctx.shadowColor = "#00d4ff";
                         const centerX = c.x * TILE_SIZE + TILE_SIZE / 2;
                         const centerY = c.y * TILE_SIZE + TILE_SIZE / 2;
+                        // Animated Rotation
+                        const angle = Date.now() / 500;
+                        ctx.translate(centerX, centerY);
+                        ctx.rotate(angle);
                         ctx.beginPath();
-                        ctx.moveTo(centerX, centerY - TILE_SIZE / 4);
-                        ctx.lineTo(centerX + TILE_SIZE / 4, centerY);
-                        ctx.lineTo(centerX, centerY + TILE_SIZE / 4);
-                        ctx.lineTo(centerX - TILE_SIZE / 4, centerY);
+                        ctx.moveTo(0, -TILE_SIZE / 4);
+                        ctx.lineTo(TILE_SIZE / 4, 0);
+                        ctx.lineTo(0, TILE_SIZE / 4);
+                        ctx.lineTo(-TILE_SIZE / 4, 0);
                         ctx.closePath();
                         ctx.fill();
                         ctx.restore();
@@ -629,12 +762,13 @@
                     ctx.save();
                     ctx.strokeStyle = "#00ff41";
                     ctx.lineWidth = 3;
-                    ctx.shadowBlur = 20;
+                    ctx.shadowBlur = 20 + Math.sin(Date.now() / 200) * 10;
                     ctx.shadowColor = "#00ff41";
                     const centerX = p.x * TILE_SIZE + TILE_SIZE / 2;
                     const centerY = p.y * TILE_SIZE + TILE_SIZE / 2;
+                    const scale = 1 + Math.sin(Date.now() / 400) * 0.1;
                     ctx.beginPath();
-                    ctx.ellipse(centerX, centerY, TILE_SIZE / 3, TILE_SIZE / 2, 0, 0, Math.PI * 2);
+                    ctx.ellipse(centerX, centerY, (TILE_SIZE / 3) * scale, (TILE_SIZE / 2) * scale, Math.sin(Date.now() / 1000) * 0.2, 0, Math.PI * 2);
                     ctx.stroke();
 
                     // Inner glow
@@ -693,25 +827,34 @@
                     ctx.fill();
                 }
 
-                // Update HUD
-                document.getElementById('level-text').textContent = level;
-                document.getElementById('health-text').textContent = player.health;
-                document.getElementById('score-text').textContent = player.totalScore || 0;
+                // Final UI Overlays (Restored from shake/camera)
+                ctx.restore();
 
-                let weaponText = 'Unarmed';
+                // drawVignette(); // Call this here for "blindness" or "darkness" levels if needed
+
+                const realmName = realms[(level - 1) % realms.length];
+                document.getElementById('level-text').textContent = `${realmName} (${level})`;
+                document.getElementById('health-text').textContent = player.health;
+
+                const oldScore = parseInt(document.getElementById('score-text').textContent);
+                if (oldScore !== (player.totalScore || 0)) {
+                    animateValue('score-text', oldScore, player.totalScore || 0, 500);
+                }
+
+                let weaponVal = '0';
                 if (player.hasWeapon) {
-                    weaponText = `Twin Daggers (${player.weaponDurability})`;
+                    weaponVal = player.weaponDurability;
                     document.getElementById('weapon-text').classList.add('ready-pulse');
                     document.getElementById('weapon-text').style.color = "#00ff41";
                 } else {
                     document.getElementById('weapon-text').classList.remove('ready-pulse');
                     document.getElementById('weapon-text').style.color = "#ff4141";
                 }
-                document.getElementById('weapon-text').textContent = weaponText;
+                document.getElementById('weapon-text').textContent = weaponVal;
 
                 const mischiefEl = document.getElementById('mischief-status');
                 if (mischiefEl) {
-                    mischiefEl.textContent = mischiefUsed ? "Exhausted" : "Ready";
+                    mischiefEl.textContent = mischiefUsed ? "0" : "1";
                     if (mischiefUsed) {
                         mischiefEl.style.color = "#ff4141";
                         mischiefEl.classList.remove('ready-pulse');
@@ -724,6 +867,12 @@
                 // Update New HUD items
                 document.getElementById('stone-text').textContent = player.spaceStones || 0;
                 document.getElementById('portal-text').textContent = player.portals || 0;
+
+                // Update Side HUD
+                const viewTextSide = document.getElementById('view-text-side');
+                if (viewTextSide) {
+                    viewTextSide.textContent = isGridView ? "Grid" : "Standard";
+                }
             } catch (err) {
                 console.error("Render failure on level", level, ":", err);
             }
@@ -741,12 +890,18 @@
                 const dy = Math.abs(player.y - enemy.y);
 
                 if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
+                    if (enemy.level === 1) {
+                        // Level 1 enemies only attack in 3D view
+                        return;
+                    }
                     if (!enemy.confused) {
                         player.health -= enemy.damage;
+                        triggerShake(15);
                     } else {
-                        // Confused enemies deal less damage or miss
+                        // Confused enemies might skip turn or move randomly even more
                         if (Math.random() > 0.5) {
                             player.health -= Math.floor(enemy.damage / 2);
+                            triggerShake(8);
                         }
                     }
                     return;
@@ -1000,6 +1155,10 @@
                 render();
                 return;
             }
+            else if (key === 'v') { // Toggle Grid Mode
+                toggleGridView();
+                return;
+            }
             else if (key === '1') { // Combat
                 if (player.hasWeapon && player.weaponDurability > 0) {
                     // Find closest valid enemy
@@ -1085,9 +1244,9 @@
                 if (player.x === p.x && player.y === p.y) {
                     showNotification("Entering the Void... Skipping 5 Realms!");
                     portals.splice(index, 1);
-                    setTimeout(() => {
-                        level += 5;
-                        startLevel();
+                    setTimeout(async () => {
+                        level += 4; // Add 4 here because nextLevel adds 1
+                        await nextLevel();
                     }, 500);
                 }
             });
@@ -1155,11 +1314,9 @@
                     feedbackEl.style.color = "#00ff41";
                     player.totalScore += 500;
                     showNotification("Level Cleared! +500 Score");
-                    setTimeout(() => {
+                    setTimeout(async () => {
                         document.getElementById('gatekeeper-modal').style.display = 'none';
-                        isPaused = false;
-                        level++;
-                        startLevel();
+                        await nextLevel();
                     }, 1000);
                 } else {
                     feedbackEl.textContent = "Incorrect. The Bifrost remains closed.";
@@ -1199,6 +1356,23 @@
 
             render();
         });
+
+        function toggleGridView() {
+            isGridView = !isGridView;
+            const canvasEl = document.getElementById('gameCanvas');
+            const viewText = document.getElementById('view-text-side');
+
+            if (isGridView) {
+                canvasEl.classList.add('grid-mode');
+                if (viewText) viewText.textContent = "Grid";
+                showNotification("Grid Mode / Mini-Map Enabled");
+            } else {
+                canvasEl.classList.remove('grid-mode');
+                if (viewText) viewText.textContent = "Standard";
+                showNotification("Standard View Enabled");
+            }
+            render();
+        }
 
         // --- SECRET CHEAT CODES ---
         let cheatBuffer = "";
@@ -1345,12 +1519,16 @@
             playMusicWithRetry();
 
             if (!localStorage.getItem('lokiRulesWatched')) {
-                playCutscene('scene/rules.mp4', () => {
+                playCutscene('scene/rules.mp4', async () => {
                     localStorage.setItem('lokiRulesWatched', 'true');
+                    await triggerLevelTransition(realms[0]);
                     startLevel();
                 });
             } else {
-                startLevel();
+                (async () => {
+                    await triggerLevelTransition(realms[0]);
+                    startLevel();
+                })();
             }
         };
 
@@ -1360,12 +1538,16 @@
                 document.getElementById('name-modal').style.display = 'flex';
                 isPaused = true;
             } else if (!localStorage.getItem('lokiRulesWatched')) {
-                playCutscene('scene/rules.mp4', () => {
+                playCutscene('scene/rules.mp4', async () => {
                     localStorage.setItem('lokiRulesWatched', 'true');
+                    await triggerLevelTransition(realms[0]);
                     startLevel();
                 });
             } else {
-                startLevel();
+                (async () => {
+                    await triggerLevelTransition(realms[0]);
+                    startLevel();
+                })();
             }
         };
     </script>

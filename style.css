@@ -21,7 +21,8 @@
             color: var(--gold);
             font-size: 3em;
             text-shadow: 0 0 10px rgba(212, 175, 55, 0.5), 0 0 20px rgba(0, 77, 38, 0.8);
-            margin-top: 10px;
+            margin-top: 80px;
+            /* Space for top HUD */
             letter-spacing: 5px;
         }
 
@@ -42,43 +43,134 @@
         canvas {
             background-color: #0c140c;
             border: 4px solid var(--gold);
-            box-shadow: 0 0 30px rgba(212, 175, 55, 0.3), inset 0 0 20px rgba(0, 77, 38, 0.5);
-            image-rendering: pixelated;
+            box-shadow: 0 0 50px rgba(0, 77, 38, 0.4), inset 0 0 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(212, 175, 55, 0.2);
+            image-rendering: auto;
+            /* Smoother for sprites */
             max-width: 95vw;
             display: block;
             margin: 20px auto;
+            transition: box-shadow 0.5s ease;
         }
 
-        #hud {
+        canvas:hover {
+            box-shadow: 0 0 70px rgba(212, 175, 55, 0.3), inset 0 0 20px rgba(0, 77, 38, 0.5);
+        }
+
+        canvas.grid-mode {
+            max-width: 90vw;
+            max-height: 70vh;
+            object-fit: contain;
+            border-style: dashed;
+            box-shadow: 0 0 50px rgba(0, 255, 65, 0.5);
+        }
+
+        #top-hud {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
             display: flex;
             justify-content: center;
-            gap: 30px;
-            font-size: 1.2em;
-            margin-bottom: 20px;
-            background: rgba(0, 77, 38, 0.2);
-            padding: 15px;
-            border-radius: 10px;
-            border: 1px solid var(--gold);
-            backdrop-filter: blur(5px);
+            gap: 40px;
+            padding: 15px 30px;
+            background: linear-gradient(180deg, rgba(5, 18, 8, 0.9) 0%, rgba(5, 18, 8, 0.7) 100%);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-bottom: 2px solid rgba(212, 175, 55, 0.4);
+            z-index: 1000;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.8), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+            transition: all 0.4s ease;
+        }
+
+        #top-hud:hover {
+            background: linear-gradient(180deg, rgba(5, 18, 8, 0.95) 0%, rgba(5, 25, 8, 0.8) 100%);
+            border-bottom: 2px solid var(--gold);
+        }
+
+        #side-hud {
+            position: fixed;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            z-index: 1000;
         }
 
         .hud-item {
             display: flex;
             flex-direction: column;
             align-items: center;
+            min-width: 80px;
+        }
+
+        .hud-stat-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .hud-icon {
+            font-size: 1.2em;
+            filter: drop-shadow(0 0 5px rgba(212, 175, 55, 0.5));
         }
 
         .hud-label {
-            font-size: 0.7em;
+            font-size: 0.65em;
             color: var(--dark-gold);
             text-transform: uppercase;
             letter-spacing: 2px;
+            margin-bottom: 4px;
         }
 
         .hud-value {
-            font-weight: bold;
+            font-weight: 700;
             color: white;
-            text-shadow: 0 0 5px var(--gold);
+            font-size: 1.1em;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5), 0 0 20px var(--gold);
+            font-family: 'Cinzel', serif;
+        }
+
+        .side-item {
+            background: rgba(5, 18, 8, 0.8);
+            backdrop-filter: blur(12px) saturate(150%);
+            -webkit-backdrop-filter: blur(12px) saturate(150%);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 16px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            width: 75px;
+            height: 75px;
+            justify-content: center;
+            color: var(--gold);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .side-item:hover {
+            background: rgba(212, 175, 55, 0.15);
+            border-color: var(--gold);
+            color: var(--gold);
+            transform: scale(1.15) translateX(8px);
+            box-shadow: 0 0 30px rgba(212, 175, 55, 0.4);
+            filter: brightness(1.2);
+        }
+
+        .side-icon {
+            font-size: 1.5em;
+        }
+
+        .side-label {
+            font-size: 0.6em;
+            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 1px;
+            white-space: nowrap;
         }
 
         /* This hides the images used for preloading */
@@ -170,19 +262,28 @@
         }
 
         button {
-            background: var(--emerald);
+            background: linear-gradient(180deg, var(--emerald) 0%, #003319 100%);
             color: var(--gold);
             border: 1px solid var(--gold);
-            padding: 10px 20px;
+            padding: 12px 25px;
             cursor: pointer;
             font-family: 'Cinzel', serif;
-            transition: 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border-radius: 4px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
         }
 
         button:hover {
             background: var(--gold);
             color: var(--deep-black);
-            box-shadow: 0 0 15px var(--gold);
+            box-shadow: 0 0 25px var(--gold);
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(1px);
         }
 
         .mischief-result {
@@ -335,7 +436,8 @@
         /* Notifications */
         #notification-container {
             position: fixed;
-            top: 20px;
+            top: 85px;
+            /* Below top HUD */
             left: 50%;
             transform: translateX(-50%);
             z-index: 10000;
@@ -347,18 +449,58 @@
         }
 
         .notification {
-            background: rgba(0, 0, 0, 0.9);
+            background: linear-gradient(135deg, #1a1a1a 0%, #051208 100%);
             color: var(--gold);
-            border: 1px solid var(--gold);
-            padding: 12px 24px;
-            border-radius: 8px;
+            border: 1px solid rgba(212, 175, 55, 0.5);
+            padding: 15px 30px;
+            border-radius: 4px;
             font-family: 'Cinzel', serif;
-            box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
-            animation: slideInDown 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28);
-            min-width: 300px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(212, 175, 55, 0.2);
+            animation: slideInRight 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            min-width: 320px;
             text-align: center;
-            backdrop-filter: blur(10px);
-            border-left: 4px solid var(--gold);
+            backdrop-filter: blur(15px);
+            border-left: 5px solid var(--gold);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .notification::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent);
+            transition: 0.5s;
+            animation: shine 3s infinite;
+        }
+
+        @keyframes shine {
+            0% {
+                left: -100%;
+            }
+
+            20% {
+                left: 100%;
+            }
+
+            100% {
+                left: 100%;
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%) scale(0.9);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0) scale(1);
+                opacity: 1;
+            }
         }
 
         @keyframes slideInDown {
@@ -383,6 +525,36 @@
                 opacity: 0;
                 transform: translateY(-20px);
             }
+        }
+
+        /* Transition Overlay */
+        #transition-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 15000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.8s ease;
+        }
+
+        #transition-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        #transition-overlay h2 {
+            font-size: 3em;
+            color: var(--gold);
+            text-shadow: 0 0 30px var(--gold);
+            letter-spacing: 10px;
         }
 
         /* Death Screen */
