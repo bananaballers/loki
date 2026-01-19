@@ -52,7 +52,8 @@
 
     <h1>LOKI</h1>
     <p class="instructions">"Glorious purpose awaits." Use WASD to traverse the Nine Realms. Collect Runes and find your
-        Daggers to strike down enemies (1) or use Mischief (2) to confuse them.</p>
+        Daggers to strike down enemies (1) or use Mischief (2) to confuse them. Collect <b>Space Stone fragments</b> to
+        forge <b>Portals (P)</b> and skip through the void.</p>
 
 
 
@@ -128,6 +129,14 @@
         <div class="hud-item" onclick="openLeaderboard()" style="cursor: pointer;">
             <span class="hud-label">Hall of</span>
             <span class="hud-value" style="color: var(--gold);">Heroes</span>
+        </div>
+        <div class="hud-item">
+            <span class="hud-label">Space Stones</span>
+            <span id="stone-text" class="hud-value" style="color: #00d4ff;">0</span>
+        </div>
+        <div class="hud-item">
+            <span class="hud-label">Portals</span>
+            <span id="portal-text" class="hud-value" style="color: #00ff41;">0</span>
         </div>
         <div class="hud-item" onclick="openCredits()" style="cursor: pointer;">
             <span class="hud-label">Info</span>
@@ -409,7 +418,9 @@
             enemy3: document.getElementById('enemy3-img'),
             coin: document.getElementById('coin-img'),
             weapon: document.getElementById('weapon-img'),
-            potion: document.getElementById('potion-img')
+            potion: document.getElementById('potion-img'),
+            spaceStone: null, // Drawing logic fallback
+            portal: null
         };
 
         // --- GAME STATE ---
@@ -418,6 +429,7 @@
         let player = {};
         let enemies = [];
         let collectibles = [];
+        let portals = []; // Placed portals
         let mazeWidth, mazeHeight;
         let isGameOver = false;
 
@@ -538,6 +550,12 @@
                 const pos = emptyTiles.pop();
                 collectibles.push({ x: pos.x, y: pos.y, type: 'potion' });
             }
+
+            // Space Stone Fragments (3 fragments per level)
+            for (let i = 0; i < 3 && emptyTiles.length > 0; i++) {
+                const pos = emptyTiles.pop();
+                collectibles.push({ x: pos.x, y: pos.y, type: 'spaceStone' });
+            }
         }
 
         // --- RENDER & UI ---
@@ -587,7 +605,42 @@
                 collectibles.forEach(c => {
                     if (assets[c.type]) {
                         ctx.drawImage(assets[c.type], c.x * TILE_SIZE, c.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                    } else if (c.type === 'spaceStone') {
+                        // Drawing logic for Space Stone
+                        ctx.save();
+                        ctx.fillStyle = "#00d4ff";
+                        ctx.shadowBlur = 15;
+                        ctx.shadowColor = "#00d4ff";
+                        const centerX = c.x * TILE_SIZE + TILE_SIZE / 2;
+                        const centerY = c.y * TILE_SIZE + TILE_SIZE / 2;
+                        ctx.beginPath();
+                        ctx.moveTo(centerX, centerY - TILE_SIZE / 4);
+                        ctx.lineTo(centerX + TILE_SIZE / 4, centerY);
+                        ctx.lineTo(centerX, centerY + TILE_SIZE / 4);
+                        ctx.lineTo(centerX - TILE_SIZE / 4, centerY);
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.restore();
                     }
+                });
+
+                // Draw Portals
+                portals.forEach(p => {
+                    ctx.save();
+                    ctx.strokeStyle = "#00ff41";
+                    ctx.lineWidth = 3;
+                    ctx.shadowBlur = 20;
+                    ctx.shadowColor = "#00ff41";
+                    const centerX = p.x * TILE_SIZE + TILE_SIZE / 2;
+                    const centerY = p.y * TILE_SIZE + TILE_SIZE / 2;
+                    ctx.beginPath();
+                    ctx.ellipse(centerX, centerY, TILE_SIZE / 3, TILE_SIZE / 2, 0, 0, Math.PI * 2);
+                    ctx.stroke();
+
+                    // Inner glow
+                    ctx.fillStyle = "rgba(0, 255, 65, 0.2)";
+                    ctx.fill();
+                    ctx.restore();
                 });
 
                 enemies.forEach(e => {
@@ -667,6 +720,10 @@
                         mischiefEl.classList.add('ready-pulse');
                     }
                 }
+
+                // Update New HUD items
+                document.getElementById('stone-text').textContent = player.spaceStones || 0;
+                document.getElementById('portal-text').textContent = player.portals || 0;
             } catch (err) {
                 console.error("Render failure on level", level, ":", err);
             }
@@ -908,9 +965,12 @@
                 coins: player.coins || 0,
                 totalScore: player.totalScore || 0,
                 hasWeapon: player.hasWeapon || false,
-                weaponDurability: player.weaponDurability || 0
+                weaponDurability: player.weaponDurability || 0,
+                spaceStones: player.spaceStones || 0,
+                portals: player.portals || 0
             };
 
+            portals = []; // Clear portals each level
             map = generateMaze(width, height);
             populateMaze();
             render();
@@ -929,6 +989,17 @@
             else if (key === 's') { newY++; playerAction = true; }
             else if (key === 'a') { newX--; playerAction = true; }
             else if (key === 'd') { newX++; playerAction = true; }
+            else if (key === 'p') { // Place Portal
+                if (player.portals > 0) {
+                    player.portals--;
+                    portals.push({ x: player.x, y: player.y });
+                    showNotification("Portal Opened! Enter to skip realms.");
+                } else {
+                    showNotification("Collect 3 Space Stone fragments to forge a portal!");
+                }
+                render();
+                return;
+            }
             else if (key === '1') { // Combat
                 if (player.hasWeapon && player.weaponDurability > 0) {
                     // Find closest valid enemy
@@ -995,7 +1066,29 @@
                         player.totalScore += 25;
                         playCutscene('scene/health.mp4');
                     }
+                    if (c.type === 'spaceStone') {
+                        player.spaceStones++;
+                        player.totalScore += 50;
+                        showNotification(`Space Stone Fragment Collected! (${player.spaceStones}/3)`);
+                        if (player.spaceStones >= 3) {
+                            player.spaceStones -= 3;
+                            player.portals++;
+                            showNotification("Tesseract Fragment Forged! Portal Ready (Press P)");
+                        }
+                    }
                     collectibles.splice(index, 1);
+                }
+            });
+
+            // Check for Portal interaction
+            portals.forEach((p, index) => {
+                if (player.x === p.x && player.y === p.y) {
+                    showNotification("Entering the Void... Skipping 5 Realms!");
+                    portals.splice(index, 1);
+                    setTimeout(() => {
+                        level += 5;
+                        startLevel();
+                    }, 500);
                 }
             });
 
