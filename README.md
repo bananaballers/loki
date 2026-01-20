@@ -1,3 +1,20 @@
+# Thanks for playing!
+\- The Norn Bunny
+
+
+![](https://github.com/bananaballers/loki/blob/1865cc71241d44a3d50b5f840c35e80a485dccf8/game/bunny.png)
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+
 # Loki: The Trickster's Trial
 
 Welcome to **Loki: The Trickster's Trial**, a 2D Norse adventure game where you step into the role of the God of Mischief himself. Navigate treacherous mazes across the Nine Realms, outsmart your enemies, and collect enough Runes to prove your worth.
