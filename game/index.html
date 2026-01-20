@@ -21,11 +21,17 @@
 
     <div id="notification-container"></div>
     <div id="transition-overlay">
-        <h2 id="transition-realm-name">Entering the Void</h2>
+        <img src="bunny_speaking.png" alt="The Norn Bunny"
+            style="width: 150px; height: 150px; margin-bottom: 20px; filter: drop-shadow(0 0 20px var(--gold)); animation: floating 3s ease-in-out infinite;">
+        <h2 id="transition-realm-name" style="position: relative;">Entering the Void
+            <div id="game-splash-text" class="splash-text" style="font-size: 0.4em; top: 40px; right: -60px;">Bunny :D
+            </div>
+        </h2>
         <p id="transition-realm-desc"
-            style="color: #ccc; font-family: 'Cormorant Garamond'; font-style: italic; font-size: 1.4em; max-width: 600px; line-height: 1.6; margin-top: 20px;">
+            style="color: #ccc; font-family: 'Cormorant Garamond'; font-style: italic; font-size: 1.4em; max-width: 600px; line-height: 1.6; margin-top: 10px;">
         </p>
-        <p style="color: #666; font-family: 'Cinzel'; letter-spacing: 5px; margin-top: 30px;">Wait for the Norns</p>
+        <p style="color: #666; font-family: 'Cinzel'; letter-spacing: 5px; margin-top: 20px;">The Norn Bunny
+            Foretells...</p>
     </div>
 
     <div id="death-screen">
@@ -160,7 +166,34 @@
                 <span id="weapon-text" class="hud-value">0</span>
             </div>
         </div>
+        <div class="hud-item" title="Camp Out (Press 3) - Invulnerability & Fast-Forward" onclick="campOut()"
+            style="cursor: pointer;">
+            <span class="hud-label">Camp Out</span>
+            <div class="hud-stat-group">
+                <span class="hud-icon">⛺</span>
+                <span id="campout-text" class="hud-value">3</span>
+            </div>
+        </div>
+
+        <!-- The Norn Bunny Prophecy Button -->
+        <div
+            style="position: absolute; right: 25px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; align-items: center; gap: 4px;">
+            <img src="bunny.png" alt="The Norn Bunny" onclick="showBunnyProphecy()"
+                style="height: 48px; width: 48px; border-radius: 50%; border: 2px solid var(--gold); background: rgba(5, 18, 8, 0.95); padding: 4px; box-shadow: 0 0 15px rgba(212, 175, 55, 0.4); cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);"
+                onmouseover="this.style.transform='scale(1.2) rotate(5deg)'; this.style.boxShadow='0 0 25px var(--gold)';"
+                onmouseout="this.style.transform='scale(1) rotate(0deg)';" title="Hear the Norn Bunny's Prophecy">
+            <span
+                style="font-size: 0.55em; color: var(--gold); text-transform: uppercase; letter-spacing: 1px; font-weight: bold; font-family: 'Cinzel';">Prophecy</span>
+        </div>
     </div>
+    <div class="ticker-container">
+        <div class="ticker-wrap">
+            <div id="main-ticker" class="ticker-move">
+                <!-- Will be populated by JS -->
+            </div>
+        </div>
+    </div>
+
 
     <div id="side-hud">
         <button class="side-item" onclick="openLeaderboard()" title="Hall of Heroes">
@@ -194,7 +227,12 @@
         <div class="modal-content">
             <span class="close" onclick="closeLeaderboard()">&times;</span>
             <h2 style="text-align: center;">Hall of Heroes</h2>
-            <div id="leaderboard-loading" style="text-align: center; color: var(--gold);">Communing with the Norns...
+            <div id="leaderboard-loading"
+                style="text-align: center; color: var(--gold); display: flex; flex-direction: column; align-items: center; gap: 10px;">
+                Communing with the Norns...
+                <div id="leaderboard-splash" class="splash-text"
+                    style="position: static; animation: splash-pulse 0.5s ease-in-out infinite; font-size: 0.8em; margin-top: 10px;">
+                </div>
             </div>
             <table class="leaderboard-table" id="leaderboard-table" style="display: none;">
                 <thead>
@@ -225,6 +263,8 @@
         <img id="coin-img" src="coin.png" alt="coin">
         <img id="weapon-img" src="swords.png" alt="weapon">
         <img id="potion-img" src="potion1.png" alt="health potion">
+        <img id="bunny-img" src="bunny.png" alt="norn bunny">
+        <img id="bunnyspeaking-img" src="bunny_speaking.png" alt="norn bunny speaking">
     </div>
 
     <script type="module">
@@ -286,9 +326,28 @@
 
         window.openLeaderboard = async function () {
             document.getElementById('leaderboard-modal').style.display = 'flex';
-            document.getElementById('leaderboard-loading').style.display = 'block';
+            const loadingEl = document.getElementById('leaderboard-loading');
+            loadingEl.style.display = 'flex';
             document.getElementById('leaderboard-table').style.display = 'none';
             isPaused = true;
+
+            // Set random splash with rotation
+            fetch('../questions/splash.json')
+                .then(r => r.json())
+                .then(splashes => {
+                    const splashEl = document.getElementById('leaderboard-splash');
+                    const update = () => { splashEl.textContent = splashes[Math.floor(Math.random() * splashes.length)]; };
+                    update();
+                    const interval = setInterval(() => {
+                        if (loadingEl.style.display === 'none') {
+                            clearInterval(interval);
+                        } else {
+                            update();
+                        }
+                    }, 3000);
+                });
+
+
 
             if (!isFirebaseInitialized) {
                 // Show mock data if Firebase is not setup
@@ -453,6 +512,20 @@
                 realmText.textContent = realmName || `Realm ${level}`;
                 descText.textContent = realmDesc;
 
+                // Random splash text from central JSON with rotation
+                fetch('../questions/splash.json')
+                    .then(r => r.json())
+                    .then(splashes => {
+                        const splashEl = document.getElementById('game-splash-text');
+                        const update = () => { splashEl.textContent = splashes[Math.floor(Math.random() * splashes.length)]; };
+                        update();
+                        const interval = setInterval(update, 3000);
+                        // Clear interval when overlay is hidden (roughly after resolve + fade)
+                        setTimeout(() => clearInterval(interval), 5000);
+                    });
+
+
+
                 overlay.style.display = 'flex';
                 setTimeout(() => overlay.classList.add('active'), 50);
 
@@ -480,6 +553,12 @@
             "Helheim": { wall: '#1a1a1a', floor: '#061208', border: '#333333', quirk: 'Cursed (Blindness)' }
         };
 
+        window.showBunnyProphecy = function () {
+            const realmName = realms[(level - 1) % realms.length];
+            const currentStyle = realmStyles[realmName];
+            showNotification(`The Norn Bunny whispers: You are in ${realmName} (Level ${level}). This realm is ${currentStyle.quirk}.`);
+        };
+
         async function nextLevel() {
             const realmName = realms[(level) % realms.length];
 
@@ -489,6 +568,20 @@
             startLevel();
             isPaused = false;
         }
+
+        // Initialize and rotate Main Game Ticker (Footer Bar)
+        fetch('../questions/splash.json')
+            .then(r => r.json())
+            .then(splashes => {
+                const ticker = document.getElementById('main-ticker');
+                const update = () => {
+                    ticker.innerHTML = `<div class="ticker-item">${splashes[Math.floor(Math.random() * splashes.length)]}</div>`;
+                };
+                update();
+                setInterval(update, 3000);
+            });
+
+
 
         function showDeathScreen(text) {
             isGameOver = true;
@@ -882,6 +975,13 @@
 
                 if (!heroSprite) heroSprite = assets.heroIdleNoWeapon;
 
+                if (player.isInvulnerable) {
+                    ctx.save();
+                    ctx.shadowBlur = 15;
+                    ctx.shadowColor = "gold";
+                    ctx.globalAlpha = 0.7 + Math.sin(Date.now() / 100) * 0.2;
+                }
+
                 if (heroSprite && heroSprite.complete) {
                     ctx.drawImage(heroSprite, player.x * TILE_SIZE, player.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
                 } else {
@@ -891,6 +991,10 @@
                     ctx.beginPath();
                     ctx.arc(player.x * TILE_SIZE + TILE_SIZE / 2, player.y * TILE_SIZE + TILE_SIZE / 2, TILE_SIZE / 3, 0, Math.PI * 2);
                     ctx.fill();
+                }
+
+                if (player.isInvulnerable) {
+                    ctx.restore();
                 }
 
                 // Realm Effects
@@ -943,6 +1047,12 @@
                 // Update New HUD items
                 document.getElementById('stone-text').textContent = player.spaceStones || 0;
                 document.getElementById('portal-text').textContent = player.portals || 0;
+                document.getElementById('campout-text').textContent = player.campOutCharges || 0;
+                if (player.campOutCharges > 0) {
+                    document.getElementById('campout-text').style.color = "#00ff41";
+                } else {
+                    document.getElementById('campout-text').style.color = "#ff4141";
+                }
 
                 // Update Side HUD
                 const viewTextSide = document.getElementById('view-text-side');
@@ -971,13 +1081,17 @@
                         return;
                     }
                     if (!enemy.confused) {
-                        player.health -= enemy.damage;
-                        triggerShake(15);
+                        if (!player.isInvulnerable) {
+                            player.health -= enemy.damage;
+                            triggerShake(15);
+                        }
                     } else {
                         // Confused enemies might skip turn or move randomly even more
                         if (Math.random() > 0.5) {
-                            player.health -= Math.floor(enemy.damage / 2);
-                            triggerShake(8);
+                            if (!player.isInvulnerable) {
+                                player.health -= Math.floor(enemy.damage / 2);
+                                triggerShake(8);
+                            }
                         }
                     }
                     return;
@@ -1198,7 +1312,9 @@
                 hasWeapon: player.hasWeapon || false,
                 weaponDurability: player.weaponDurability || 0,
                 spaceStones: player.spaceStones || 0,
-                portals: player.portals || 0
+                portals: player.portals || 0,
+                campOutCharges: 3,
+                isInvulnerable: false
             };
 
             portals = []; // Clear portals each level
@@ -1256,6 +1372,8 @@
                 }
             } else if (key === '2') { // Mischief
                 openMischief();
+            } else if (key === '3') { // Camp Out
+                campOut();
             } else {
                 return;
             }
@@ -1455,6 +1573,34 @@
 
             render();
         });
+
+        window.campOut = function () {
+            if (isGameOver || isPaused) return;
+            if (player.campOutCharges <= 0) {
+                showNotification("No Camp Out charges left in this realm!");
+                return;
+            }
+
+            player.campOutCharges--;
+            player.isInvulnerable = true;
+            isPaused = true;
+            showNotification("Camping Out... Invulnerable while time flows forward!");
+
+            // Move enemies 10x
+            let moves = 0;
+            const moveInterval = setInterval(() => {
+                processEnemyTurns();
+                render();
+                moves++;
+                if (moves >= 10) {
+                    clearInterval(moveInterval);
+                    player.isInvulnerable = false;
+                    isPaused = false;
+                    showNotification("Camp Out finished.");
+                    render();
+                }
+            }, 100); // 100ms between each "fast" move
+        };
 
         function toggleGridView() {
             isGridView = !isGridView;

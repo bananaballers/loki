@@ -688,3 +688,87 @@
         #score-submit-container input:focus {
             box-shadow: 0 0 10px var(--gold);
         }
+
+        @keyframes floating {
+            0% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-15px);
+            }
+
+            100% {
+                transform: translateY(0px);
+            }
+        }
+
+        @keyframes splash-pulse {
+            0% {
+                transform: scale(1) rotate(-15deg);
+            }
+
+            50% {
+                transform: scale(1.1) rotate(-15deg);
+            }
+
+            100% {
+                transform: scale(1) rotate(-15deg);
+            }
+        }
+
+        .splash-text {
+            position: absolute;
+            top: 60px;
+            right: -80px;
+            color: #ffff00;
+            font-size: 1.2rem;
+            font-family: 'Cinzel', serif;
+            text-shadow: 2px 2px 0px #3f3f00;
+            animation: splash-pulse 0.5s ease-in-out infinite;
+            z-index: 100;
+            white-space: nowrap;
+            pointer-events: none;
+            -webkit-user-select: none;
+            user-select: none;
+            font-weight: bold;
+        }
+
+        .ticker-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(5, 18, 8, 0.9);
+            backdrop-filter: blur(20px);
+            border-top: 2px solid rgba(212, 175, 55, 0.4);
+            z-index: 1000;
+            overflow: hidden;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.5);
+        }
+
+
+        .ticker-wrap {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+
+        .ticker-move {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .ticker-item {
+            padding: 0 1rem;
+            font-family: 'Cinzel', serif;
+            font-size: 1rem;
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+        }

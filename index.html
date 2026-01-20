@@ -45,7 +45,10 @@
   <!-- Entry Overlay -->
   <div id="enter-overlay"
     style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0a0a0a; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10000; text-align: center;">
-    <h1 style="font-size: 4em; margin-bottom: 40px;">Loki Game</h1>
+    <h1 style="font-size: 4em; margin-bottom: 40px; position: relative;">
+      Loki Game
+      <div id="splash-text" class="splash-text">Bunny :D</div>
+    </h1>
     <button id="enter-button" style="font-size: 1.5em; padding: 20px 40px;">Begin the Mischief</button>
   </div>
 
@@ -81,8 +84,44 @@
       music.play().catch(e => console.log("Audio play failed:", e));
       enterOverlay.style.display = 'none';
     });
+
+    // Splash texts
+    // Fetch and rotate splashes
+    fetch('questions/splash.json')
+      .then(r => r.json())
+      .then(s => {
+        const splashEl = document.getElementById('splash-text');
+        const updateSplash = () => {
+          splashEl.textContent = s[Math.floor(Math.random() * s.length)];
+        };
+        updateSplash();
+        setInterval(updateSplash, 3000);
+      });
+
   </script>
+  <div class="ticker-container">
+    <div class="ticker-wrap">
+      <div id="landing-ticker" class="ticker-move">
+        <!-- Will be populated by JS -->
+      </div>
+    </div>
+  </div>
+
   <script src="script.js"></script>
+  <script>
+    // Populate and rotate Ticker
+    fetch('questions/splash.json')
+      .then(r => r.json())
+      .then(splashes => {
+        const ticker = document.getElementById('landing-ticker');
+        const update = () => {
+          ticker.innerHTML = `<div class="ticker-item">${splashes[Math.floor(Math.random() * splashes.length)]}</div>`;
+        };
+        update();
+        setInterval(update, 3000);
+      });
+
+  </script>
 </body>
 
 </html>
