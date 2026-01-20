@@ -23,10 +23,9 @@
     <div id="transition-overlay">
         <img src="bunny_speaking.png" alt="The Norn Bunny"
             style="width: 150px; height: 150px; margin-bottom: 20px; filter: drop-shadow(0 0 20px var(--gold)); animation: floating 3s ease-in-out infinite;">
-        <h2 id="transition-realm-name" style="position: relative;">Entering the Void
-            <div id="game-splash-text" class="splash-text" style="font-size: 0.4em; top: 40px; right: -60px;">Bunny :D
-            </div>
-        </h2>
+        <h2 id="transition-realm-name" style="position: relative;">Entering the Void</h2>
+        <div id="game-splash-text" class="splash-text" style="font-size: 1.2rem; margin-top: -10px; position: static;">
+            Bunny :D</div>
         <p id="transition-realm-desc"
             style="color: #ccc; font-family: 'Cormorant Garamond'; font-style: italic; font-size: 1.4em; max-width: 600px; line-height: 1.6; margin-top: 10px;">
         </p>
@@ -336,6 +335,7 @@
                 .then(r => r.json())
                 .then(splashes => {
                     const splashEl = document.getElementById('leaderboard-splash');
+                    if (!splashEl) return;
                     const update = () => { splashEl.textContent = splashes[Math.floor(Math.random() * splashes.length)]; };
                     update();
                     const interval = setInterval(() => {
@@ -436,9 +436,9 @@
         const music = document.getElementById('bg-music');
 
         function playMusicWithRetry() {
+            if (!music) return;
             music.play().catch(e => {
-                console.log("Audio play failed, retrying...", e);
-                setTimeout(playMusicWithRetry, 100);
+                console.log("Audio play postponed until interaction.");
             });
         }
 
@@ -517,6 +517,7 @@
                     .then(r => r.json())
                     .then(splashes => {
                         const splashEl = document.getElementById('game-splash-text');
+                        if (!splashEl) return;
                         const update = () => { splashEl.textContent = splashes[Math.floor(Math.random() * splashes.length)]; };
                         update();
                         const interval = setInterval(update, 3000);
@@ -574,6 +575,7 @@
             .then(r => r.json())
             .then(splashes => {
                 const ticker = document.getElementById('main-ticker');
+                if (!ticker) return;
                 const update = () => {
                     ticker.innerHTML = `<div class="ticker-item">${splashes[Math.floor(Math.random() * splashes.length)]}</div>`;
                 };
@@ -941,12 +943,14 @@
                     if (e.type === 'elite') sprite = assets.enemy2;
                     if (e.type === 'boss') sprite = assets.enemy3;
 
-                    if (sprite && sprite.complete) {
+                    if (sprite && sprite.complete && sprite.naturalWidth > 0) {
                         ctx.drawImage(sprite, e.x * TILE_SIZE, e.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
                     } else {
-                        // Fallback if sprite not loaded
-                        ctx.fillStyle = "red";
+                        // Fallback if sprite not loaded or broken
+                        ctx.fillStyle = e.type === 'boss' ? "#aa00ff" : (e.type === 'elite' ? "#ff00ff" : "#ff0000");
                         ctx.fillRect(e.x * TILE_SIZE, e.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                        ctx.strokeStyle = "white";
+                        ctx.strokeRect(e.x * TILE_SIZE, e.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
                     }
 
                     // HP Bar
@@ -982,15 +986,16 @@
                     ctx.globalAlpha = 0.7 + Math.sin(Date.now() / 100) * 0.2;
                 }
 
-                if (heroSprite && heroSprite.complete) {
+                if (heroSprite && heroSprite.complete && heroSprite.naturalWidth > 0) {
                     ctx.drawImage(heroSprite, player.x * TILE_SIZE, player.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
                 } else {
-                    console.warn("Hero sprite not ready for level", level, "at", player.x, player.y);
                     // Draw a placeholder if image is failing
                     ctx.fillStyle = "gold";
                     ctx.beginPath();
                     ctx.arc(player.x * TILE_SIZE + TILE_SIZE / 2, player.y * TILE_SIZE + TILE_SIZE / 2, TILE_SIZE / 3, 0, Math.PI * 2);
                     ctx.fill();
+                    ctx.strokeStyle = "white";
+                    ctx.stroke();
                 }
 
                 if (player.isInvulnerable) {
