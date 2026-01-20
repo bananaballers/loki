@@ -34,6 +34,15 @@
         animation: fadeIn 1s ease-out;
     }
 
+    h2 {
+        color: #f2ff00;
+        text-shadow: 0 0 20px rgba(242, 255, 0, 0.8);
+        font-size: 4em;
+        margin-bottom: 40px;
+        letter-spacing: 15px;
+        animation: fadeIn 1s ease-out;
+    }
+
     .credit-item {
         margin: 40px 0;
         animation: fadeIn 1s ease-out both;

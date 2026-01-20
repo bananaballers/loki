@@ -573,30 +573,65 @@
             mazeWidth = width;
             mazeHeight = height;
 
-            let maze = Array(height).fill(null).map(() => Array(width).fill(wallChar));
-            let startX = 1, startY = 1;
-            maze[startY][startX] = floorChar;
-            let walls = [];
-            walls.push({ x: startX + 1, y: startY, fromX: startX, fromY: startY });
-            walls.push({ x: startX - 1, y: startY, fromX: startX, fromY: startY });
-            walls.push({ x: startX, y: startY + 1, fromX: startX, fromY: startY });
-            walls.push({ x: startX, y: startY - 1, fromX: startX, fromY: startY });
+            let maze;
+            let attempts = 0;
+            const maxAttempts = 10;
 
-            while (walls.length > 0) {
-                let wallIndex = Math.floor(Math.random() * walls.length);
-                let wall = walls[wallIndex];
-                let oppositeX = wall.x + (wall.x - wall.fromX);
-                let oppositeY = wall.y + (wall.y - wall.fromY);
-                if (oppositeY > 0 && oppositeY < height - 1 && oppositeX > 0 && oppositeX < width - 1 && maze[oppositeY][oppositeX] === wallChar) {
-                    maze[wall.y][wall.x] = floorChar;
-                    maze[oppositeY][oppositeX] = floorChar;
-                    if (oppositeY > 1) walls.push({ x: oppositeX, y: oppositeY - 1, fromX: oppositeX, fromY: oppositeY });
-                    if (oppositeY < height - 2) walls.push({ x: oppositeX, y: oppositeY + 1, fromX: oppositeX, fromY: oppositeY });
-                    if (oppositeX > 1) walls.push({ x: oppositeX - 1, y: oppositeY, fromX: oppositeX, fromY: oppositeY });
-                    if (oppositeX < width - 2) walls.push({ x: oppositeX + 1, y: oppositeY, fromX: oppositeX, fromY: oppositeY });
+            function isMazeUnoffensive(m) {
+                const f = floorChar;
+                for (let y = 2; y < height - 2; y++) {
+                    for (let x = 2; x < width - 2; x++) {
+                        if (m[y][x] === f) {
+                            // Check for 5x5 offensive-symbol-like configurations (pinwheel arms)
+                            // Clockwise
+                            let cw = 0;
+                            if (m[y - 1][x] === f && m[y - 2][x] === f && m[y - 2][x + 1] === f) cw++;
+                            if (m[y + 1][x] === f && m[y + 2][x] === f && m[y + 2][x - 1] === f) cw++;
+                            if (m[y][x + 1] === f && m[y][x + 2] === f && m[y + 1][x + 2] === f) cw++;
+                            if (m[y][x - 1] === f && m[y][x - 2] === f && m[y - 1][x - 2] === f) cw++;
+                            if (cw >= 3) return false;
+
+                            // Counter-clockwise
+                            let ccw = 0;
+                            if (m[y - 1][x] === f && m[y - 2][x] === f && m[y - 2][x - 1] === f) ccw++;
+                            if (m[y + 1][x] === f && m[y + 2][x] === f && m[y + 2][x + 1] === f) ccw++;
+                            if (m[y][x + 1] === f && m[y][x + 2] === f && m[y - 1][x + 2] === f) ccw++;
+                            if (m[y][x - 1] === f && m[y][x - 2] === f && m[y + 1][x - 2] === f) ccw++;
+                            if (ccw >= 3) return false;
+                        }
+                    }
                 }
-                walls.splice(wallIndex, 1);
+                return true;
             }
+
+            do {
+                maze = Array(height).fill(null).map(() => Array(width).fill(wallChar));
+                let startX = 1, startY = 1;
+                maze[startY][startX] = floorChar;
+                let walls = [];
+                walls.push({ x: startX + 1, y: startY, fromX: startX, fromY: startY });
+                walls.push({ x: startX - 1, y: startY, fromX: startX, fromY: startY });
+                walls.push({ x: startX, y: startY + 1, fromX: startX, fromY: startY });
+                walls.push({ x: startX, y: startY - 1, fromX: startX, fromY: startY });
+
+                while (walls.length > 0) {
+                    let wallIndex = Math.floor(Math.random() * walls.length);
+                    let wall = walls[wallIndex];
+                    let oppositeX = wall.x + (wall.x - wall.fromX);
+                    let oppositeY = wall.y + (wall.y - wall.fromY);
+                    if (oppositeY > 0 && oppositeY < height - 1 && oppositeX > 0 && oppositeX < width - 1 && maze[oppositeY][oppositeX] === wallChar) {
+                        maze[wall.y][wall.x] = floorChar;
+                        maze[oppositeY][oppositeX] = floorChar;
+                        if (oppositeY > 1) walls.push({ x: oppositeX, y: oppositeY - 1, fromX: oppositeX, fromY: oppositeY });
+                        if (oppositeY < height - 2) walls.push({ x: oppositeX, y: oppositeY + 1, fromX: oppositeX, fromY: oppositeY });
+                        if (oppositeX > 1) walls.push({ x: oppositeX - 1, y: oppositeY, fromX: oppositeX, fromY: oppositeY });
+                        if (oppositeX < width - 2) walls.push({ x: oppositeX + 1, y: oppositeY, fromX: oppositeX, fromY: oppositeY });
+                    }
+                    walls.splice(wallIndex, 1);
+                }
+                attempts++;
+            } while (!isMazeUnoffensive(maze) && attempts < maxAttempts);
+
             maze[height - 2][width - 2] = exitChar;
             return maze.map(row => row.join(''));
         }
