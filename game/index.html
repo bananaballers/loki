@@ -41,6 +41,8 @@
             <h3>Record your Legend</h3>
             <p>Runes: <span id="final-score">0</span></p>
             <input type="text" id="player-name" placeholder="Enter Hero Name" maxlength="15">
+            <input type="email" id="player-email" placeholder="Email (@york.org)"
+                style="margin-bottom: 15px; background: #000; border: 1px solid var(--gold); color: #fff; padding: 10px; font-family: 'Cinzel'; width: 80%; text-align: center;">
             <button id="submit-score-btn" onclick="submitScore()">Submit to Hall of Heroes</button>
         </div>
 
@@ -406,20 +408,56 @@
             }
 
             const name = document.getElementById('player-name').value.trim() || "Anonymous Hero";
+            const email = document.getElementById('player-email').value.trim().toLowerCase();
             const score = player.totalScore;
             const realm = level;
+
+            // Email Validation for york.org
+            const localPart = email.split('@')[0];
+            const domain = email.split('@')[1];
+
+            if (domain !== 'york.org') {
+                showNotification("Must be a @york.org email!");
+                return;
+            }
+
+            const isStudent = localPart.endsWith('2030');
+            const hasNumbers = /\d/.test(localPart);
+
+            // Logic: If it has numbers, it MUST end in 2030. If it doesn't end in 2030, it MUST NOT have numbers.
+            if (hasNumbers && !isStudent) {
+                showNotification("Only 2030 student emails or staff (no numbers) allowed.");
+                return;
+            }
 
             const btn = document.getElementById('submit-score-btn');
             btn.disabled = true;
             btn.textContent = "Recording...";
 
             try {
+                // Fetch user's IP address for DDoS prevention
+                let userIp = "unknown";
+                try {
+                    const ipResponse = await fetch('https://api.ipify.org?format=json');
+                    const ipData = await ipResponse.json();
+                    userIp = ipData.ip;
+                } catch (ipErr) {
+                    console.error("Failed to fetch IP:", ipErr);
+                }
+
                 await addDoc(collection(db, "leaderboard"), {
                     name: name,
+                    email: email,
                     score: score,
                     realm: realm,
+                    ip: userIp,
                     timestamp: new Date()
                 });
+
+                // Save to localStorage for future runs
+                localStorage.setItem('loki_player_name', name);
+                localStorage.setItem('loki_player_email', email);
+
                 showNotification("Your legend has been recorded!");
                 document.getElementById('score-submit-container').style.display = 'none';
                 openLeaderboard();
@@ -598,9 +636,11 @@
             document.getElementById('final-score').textContent = player.totalScore;
             document.getElementById('score-submit-container').style.display = 'flex';
 
-            // Pre-fill name from localStorage
+            // Pre-fill name and email from localStorage
             const savedName = localStorage.getItem('loki_player_name') || "";
+            const savedEmail = localStorage.getItem('loki_player_email') || "";
             document.getElementById('player-name').value = savedName;
+            document.getElementById('player-email').value = savedEmail;
 
             // Stop background music
             music.pause();
