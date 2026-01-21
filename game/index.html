@@ -333,7 +333,7 @@
             isPaused = true;
 
             // Set random splash with rotation
-            fetch('../questions/splash.json')
+            fetch('../json/splash.json')
                 .then(r => r.json())
                 .then(splashes => {
                     const splashEl = document.getElementById('leaderboard-splash');
@@ -551,7 +551,7 @@
                 descText.textContent = realmDesc;
 
                 // Random splash text from central JSON with rotation
-                fetch('../questions/splash.json')
+                fetch('../json/splash.json')
                     .then(r => r.json())
                     .then(splashes => {
                         const splashEl = document.getElementById('game-splash-text');
@@ -609,7 +609,7 @@
         }
 
         // Initialize and rotate Main Game Ticker (Footer Bar)
-        fetch('../questions/splash.json')
+        fetch('../json/splash.json')
             .then(r => r.json())
             .then(splashes => {
                 const ticker = document.getElementById('main-ticker');

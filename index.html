@@ -87,7 +87,7 @@
 
     // Splash texts
     // Fetch and rotate splashes
-    fetch('questions/splash.json')
+    fetch('json/splash.json')
       .then(r => r.json())
       .then(s => {
         const splashEl = document.getElementById('splash-text');
@@ -110,7 +110,7 @@
   <script src="script.js"></script>
   <script>
     // Populate and rotate Ticker
-    fetch('questions/splash.json')
+    fetch('json/splash.json')
       .then(r => r.json())
       .then(splashes => {
         const ticker = document.getElementById('landing-ticker');
