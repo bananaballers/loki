@@ -6,6 +6,84 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Loki Game - The Story of Mischief</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    /* Epilepsy Warning Modal */
+    #epilepsy-modal {
+      display: none;
+      position: fixed;
+      z-index: 20000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.95);
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+
+    .epilepsy-content {
+      background: #111;
+      border: 2px solid #e74c3c;
+      padding: 40px;
+      max-width: 500px;
+      border-radius: 10px;
+      box-shadow: 0 0 30px rgba(231, 76, 60, 0.5);
+    }
+
+    .epilepsy-content h2 {
+      color: #e74c3c;
+      margin-top: 0;
+    }
+
+    .epilepsy-content p {
+      color: #ccc;
+      font-size: 1.1em;
+      line-height: 1.6;
+    }
+
+    .epilepsy-btn {
+      background: #e74c3c;
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      font-size: 1em;
+      cursor: pointer;
+      margin-top: 20px;
+      border-radius: 5px;
+      transition: background 0.3s;
+    }
+
+    .epilepsy-btn:hover {
+      background: #c0392b;
+    }
+
+    /* Mute Button */
+    #mute-btn {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid var(--gold, #d4af37);
+      color: var(--gold, #d4af37);
+      padding: 10px;
+      cursor: pointer;
+      border-radius: 50%;
+      width: 45px;
+      height: 45px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.2em;
+      transition: all 0.3s;
+    }
+
+    #mute-btn:hover {
+      background: var(--gold, #d4af37);
+      color: black;
+    }
+  </style>
 </head>
 
 <body>
@@ -60,6 +138,19 @@
     Playing: Trickster Theme by Veer Bajaj
   </div>
 
+  <button id="mute-btn" title="Toggle Mute">🔊</button>
+
+  <!-- Epilepsy Warning Modal -->
+  <div id="epilepsy-modal">
+    <div class="epilepsy-content">
+      <h2>⚠️ EPILEPSY WARNING</h2>
+      <p>This game contains flashing lights, rapid patterns, and intense visual effects that may trigger seizures for
+        people with photosensitive epilepsy.</p>
+      <p>Viewer discretion is advised.</p>
+      <button class="epilepsy-btn" onclick="acknowledgeEpilepsy()">I Understand & Proceed</button>
+    </div>
+  </div>
+
   <script>
     function openCredits() {
       document.getElementById('credits-modal').style.display = 'flex';
@@ -79,11 +170,46 @@
     const enterButton = document.getElementById('enter-button');
     const enterOverlay = document.getElementById('enter-overlay');
     const music = document.getElementById('bg-music');
+    const muteBtn = document.getElementById('mute-btn');
+
+    // Audio State Management
+    let isMuted = localStorage.getItem('loki_muted') === 'true';
+
+    function updateMuteUI() {
+      muteBtn.textContent = isMuted ? '🔇' : '🔊';
+      music.muted = isMuted;
+    }
+
+    updateMuteUI();
+
+    muteBtn.addEventListener('click', function () {
+      isMuted = !isMuted;
+      localStorage.setItem('loki_muted', isMuted);
+      updateMuteUI();
+    });
+
+    // Sync mute state across tabs
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'loki_muted') {
+        isMuted = e.newValue === 'true';
+        updateMuteUI();
+      }
+    });
 
     enterButton.addEventListener('click', function () {
       music.play().catch(e => console.log("Audio play failed:", e));
       enterOverlay.style.display = 'none';
     });
+
+    // Epilepsy Warning Logic
+    function acknowledgeEpilepsy() {
+      localStorage.setItem('loki_epilepsy_acknowledged', 'true');
+      document.getElementById('epilepsy-modal').style.display = 'none';
+    }
+
+    if (localStorage.getItem('loki_epilepsy_acknowledged') !== 'true') {
+      document.getElementById('epilepsy-modal').style.display = 'flex';
+    }
 
     // Splash texts
     // Fetch and rotate splashes

@@ -236,6 +236,10 @@
             <span class="side-icon">📜</span>
             <span class="side-label">Credits</span>
         </button>
+        <button class="side-item" id="global-mute-btn" title="Toggle Global Mute">
+            <span class="side-icon" id="mute-icon">🔊</span>
+            <span class="side-label" id="mute-label">Mute</span>
+        </button>
     </div>
 
     <!-- Credits Modal -->
@@ -495,6 +499,41 @@
         var currentGateAnswer = "";
         var currentGateHint = "";
         const music = document.getElementById('bg-music');
+        const goMusic = document.getElementById('gameover-music');
+        const muteBtn = document.getElementById('global-mute-btn');
+        const muteIcon = document.getElementById('mute-icon');
+        const muteLabel = document.getElementById('mute-label');
+
+        let isMuted = localStorage.getItem('loki_muted') === 'true';
+
+        function updateGlobalMute() {
+            isMuted = localStorage.getItem('loki_muted') === 'true';
+            if (music) music.muted = isMuted;
+            if (goMusic) goMusic.muted = isMuted;
+
+            // Also mute cutscene video if it exists
+            const cutsceneVideo = document.getElementById('cutscene-video');
+            if (cutsceneVideo) cutsceneVideo.muted = isMuted;
+
+            muteIcon.textContent = isMuted ? '🔇' : '🔊';
+            muteLabel.textContent = isMuted ? 'Unmute' : 'Mute';
+        }
+
+        muteBtn.addEventListener('click', () => {
+            isMuted = !isMuted;
+            localStorage.setItem('loki_muted', isMuted);
+            updateGlobalMute();
+        });
+
+        // Sync across tabs
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'loki_muted') {
+                updateGlobalMute();
+            }
+        });
+
+        // Initialize mute state
+        updateGlobalMute();
 
         function playMusicWithRetry() {
             if (!music) return;

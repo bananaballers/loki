@@ -17,10 +17,8 @@
         <div class="role">Questions</div>
     </div>
     <div class="credit-item">
-        <div class="name"><span id="ai-link" style="text-decoration: underline; cursor: pointer;" onclick="
-                const audio = new Audio('../game/music/ohohoh.mp3');
-                audio.play();
-              ">Drew</span>:</div>
+        <div class="name"><span id="ai-link" style="text-decoration: underline; cursor: pointer;"
+                onclick="playAudio()">Drew</span>:</div>
         <div class="role">Music Design, HTML Guy</div>
     </div>
     <div class="credit-item">
@@ -44,10 +42,7 @@
         <strong>Disclaimer:</strong>
         <u>
             This game includes built-in procedural systems and limited generative
-            <span id="ai-link" style="text-decoration: underline; cursor: pointer;" onclick="
-                const audio = new Audio('../game/music/ohohoh.mp3');
-                audio.play();
-              ">
+            <span id="ai-link" style="text-decoration: underline; cursor: pointer;" onclick="playAudio()">
                 AI
             </span>
             components created by the developers to support predefined gameplay
@@ -64,12 +59,21 @@
         project and that the creators (BANANA BALLERS) are not responsible for external
         interpretations or misuse outside the intended scope of gameplay.
     </p>
+
     <p style="margin-top: 30px; font-size: 0.01em; color: #555;">THE FOLLOWING IS A JOKE AND NOT PART OF THE LEGAL BIT
         (please don't sue us)</p>
     <p style="margin-top: 30px; font-size: 0.01em; color: #555;">If your reading this Alexander is so much better than
         everyone else and also John is really hot</p>
-
     <p style="margin-top: 30px; font-size: 0.01em; color: #555;">I could really use a potato right now -John</p>
+
+    <script>
+        function playAudio() {
+            const audio = new Audio('../game/music/ohohoh.mp3');
+            audio.play().catch(error => {
+                console.error("Audio playback failed:", error);
+            });
+        }
+    </script>
 
 </body>
 
