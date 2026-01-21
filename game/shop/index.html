@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Norn's Bazaar</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Cormorant+Garamond:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --gold: #d4af37;
+            --deep-green: #0a210f;
+            --void-black: #051208;
+            --text-silver: #ccc;
+        }
+
+        body {
+            background: rgba(5, 18, 8, 0.95);
+            color: #fff;
+            font-family: 'Cinzel', serif;
+            margin: 0;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+            border: 2px solid var(--gold);
+        }
+
+        h1 {
+            color: var(--gold);
+            text-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
+            margin-bottom: 5px;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            font-family: 'Cormorant Garamond', serif;
+            font-style: italic;
+            color: var(--text-silver);
+            margin-bottom: 25px;
+            font-size: 1.2em;
+        }
+
+        .rune-display {
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid var(--gold);
+            padding: 10px 20px;
+            border-radius: 5px;
+            margin-bottom: 30px;
+            color: var(--gold);
+            font-weight: bold;
+        }
+
+        .shop-items {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .item-card {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #333;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .item-card:hover {
+            border-color: var(--gold);
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(212, 175, 55, 0.2);
+        }
+
+        .item-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .item-name {
+            font-weight: bold;
+            font-size: 1.1em;
+            color: var(--gold);
+        }
+
+        .item-price {
+            font-family: 'Cinzel';
+            font-size: 0.9em;
+            color: #00ff41;
+        }
+
+        .item-desc {
+            font-family: 'Cormorant Garamond';
+            font-size: 0.9em;
+            color: #aaa;
+            line-height: 1.4;
+        }
+
+        .buy-btn {
+            margin-top: auto;
+            background: transparent;
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            padding: 8px 15px;
+            font-family: 'Cinzel';
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s;
+        }
+
+        .buy-btn:hover:not(:disabled) {
+            background: var(--gold);
+            color: #000;
+        }
+
+        .buy-btn:disabled {
+            border-color: #444;
+            color: #444;
+            cursor: not-allowed;
+        }
+
+        .close-hint {
+            margin-top: 40px;
+            color: #666;
+            font-size: 0.8em;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>The Norn's Bazaar</h1>
+    <p class="subtitle">"Threads of fate are woven here... for a price."</p>
+
+    <div class="rune-display">
+        RUNES: <span id="rune-count">0</span> ✨
+    </div>
+
+    <div class="shop-items">
+        <!-- Swords -->
+        <div class="item-card" onclick="buy('swords')">
+            <div class="item-icon">🗡️</div>
+            <div class="item-name">10 Daggers</div>
+            <div class="item-desc">Premium steel forged in Nidavellir. Increases durability.</div>
+            <div class="item-price">1,000 Runes</div>
+            <button id="btn-swords" class="buy-btn">Acquire</button>
+        </div>
+
+        <!-- Mischief -->
+        <div class="item-card" onclick="buy('mischief')">
+            <div class="item-icon">🎭</div>
+            <div class="item-name">2 Mischief</div>
+            <div class="item-desc">Twists of the tongue to baffle your enemies.</div>
+            <div class="item-price">3,000 Runes</div>
+            <button id="btn-mischief" class="buy-btn">Acquire</button>
+        </div>
+
+        <!-- Prophecy -->
+        <div class="item-card" onclick="buy('prophecy')">
+            <div class="item-icon">🐰</div>
+            <div class="item-name">Bunny Prophecy</div>
+            <div class="item-desc">The Norn Bunny whispers secrets of the current realm.</div>
+            <div class="item-price">FREE</div>
+            <button id="btn-prophecy" class="buy-btn">Listen</button>
+        </div>
+
+        <!-- Health Potion -->
+        <div class="item-card" onclick="buy('potion')">
+            <div class="item-icon">🧪</div>
+            <div class="item-name">Healing Salve</div>
+            <div class="item-desc">Pure nectar from Vanaheim. Restores vitality fully.</div>
+            <div class="item-price">10,000 Runes</div>
+            <button id="btn-potion" class="buy-btn">Acquire</button>
+        </div>
+
+        <!-- Camp Out -->
+        <div class="item-card" onclick="buy('campout')">
+            <div class="item-icon">⛺</div>
+            <div class="item-name">Camping Supplies</div>
+            <div class="item-desc">Tents and rations for a safe respite in the wild.</div>
+            <div class="item-price">500 Runes</div>
+            <button id="btn-campout" class="buy-btn">Acquire</button>
+        </div>
+    </div>
+
+    <div class="close-hint">Press ESC or click outside to return to the Realms</div>
+
+    <script>
+        let currentRunes = 0;
+
+        // Get runes from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        currentRunes = parseInt(urlParams.get('runes')) || 0;
+        document.getElementById('rune-count').textContent = currentRunes.toLocaleString();
+
+        updateButtons();
+
+        function updateButtons() {
+            document.getElementById('btn-swords').disabled = currentRunes < 1000;
+            document.getElementById('btn-mischief').disabled = currentRunes < 3000;
+            document.getElementById('btn-potion').disabled = currentRunes < 10000;
+            document.getElementById('btn-campout').disabled = currentRunes < 500;
+        }
+
+        function buy(item) {
+            if (item === 'swords' && currentRunes >= 1000) {
+                window.parent.postMessage({ type: 'buy-swords', price: 1000 }, '*');
+            } else if (item === 'mischief' && currentRunes >= 3000) {
+                window.parent.postMessage({ type: 'buy-mischief', price: 3000 }, '*');
+            } else if (item === 'potion' && currentRunes >= 10000) {
+                window.parent.postMessage({ type: 'buy-potion', price: 10000 }, '*');
+            } else if (item === 'campout' && currentRunes >= 500) {
+                window.parent.postMessage({ type: 'buy-campout', price: 500 }, '*');
+            } else if (item === 'prophecy') {
+                window.parent.postMessage({ type: 'buy-prophecy', price: 0 }, '*');
+            }
+        }
+
+        // Listen for rune updates from parent
+        window.addEventListener('message', (event) => {
+            if (event.data.type === 'update-runes') {
+                currentRunes = event.data.runes;
+                document.getElementById('rune-count').textContent = currentRunes.toLocaleString();
+                updateButtons();
+            }
+        });
+    </script>
+</body>
+
+</html>

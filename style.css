@@ -772,3 +772,129 @@
             letter-spacing: 2px;
             text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
         }
+
+        /* Time Warp Animation */
+        @keyframes timeWarpEffect {
+            0% {
+                transform: scale(0.5) rotate(0deg);
+                opacity: 0;
+            }
+
+            100% {
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+            }
+        }
+
+
+
+        @keyframes screenVibrate {
+            0% {
+                transform: translate(0, 0);
+            }
+
+            25% {
+                transform: translate(10px, -10px);
+            }
+
+            50% {
+                transform: translate(-10px, 10px);
+            }
+
+            75% {
+                transform: translate(10px, 10px);
+            }
+
+            100% {
+                transform: translate(0, 0);
+            }
+        }
+
+        .time-warp-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 30000;
+            pointer-events: none;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .time-warp-overlay.active {
+            display: flex;
+            pointer-events: auto;
+            animation: timeWarpEffect 0.5s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+        }
+
+        .punishment-text {
+            color: #ff4141;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.4em;
+            font-style: italic;
+            line-height: 1.5;
+            max-width: 800px;
+            text-shadow: 0 0 10px #ff0000, 0 0 20px #000;
+            opacity: 1;
+            transform: translateY(0);
+            /* Slower fade in removed */
+        }
+
+        .punishment-title {
+            color: var(--gold);
+            font-family: 'Cinzel', serif;
+            font-size: 2.2em;
+            margin-bottom: 25px;
+            letter-spacing: 8px;
+            text-shadow: 0 0 20px var(--gold);
+            opacity: 1;
+        }
+
+        .time-warp-overlay.active .punishment-text,
+        .time-warp-overlay.active .punishment-title {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .vibrate-container {
+            animation: screenVibrate 0.1s infinite;
+        }
+
+        #transition-overlay.active {
+            pointer-events: auto;
+        }
+
+        #transition-overlay #transition-realm-desc,
+        #transition-overlay #transition-realm-name,
+        #transition-overlay h2,
+        #transition-overlay p {
+            opacity: 1;
+            transition: opacity 1s ease;
+        }
+
+        .continue-btn {
+            margin-top: 30px;
+            padding: 15px 40px;
+            font-size: 1.2em;
+            letter-spacing: 5px;
+            opacity: 0;
+            display: none;
+            transform: scale(0.8);
+            transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none;
+            z-index: 30001;
+        }
+
+        .continue-btn.visible {
+            display: block;
+            opacity: 1;
+            transform: scale(1);
+            pointer-events: auto;
+        }

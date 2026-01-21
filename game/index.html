@@ -20,17 +20,30 @@
     </audio>
 
     <div id="notification-container"></div>
+    <div id="time-warp-overlay" class="time-warp-overlay">
+        <h2 class="punishment-title">Your Punishment</h2>
+        <div class="punishment-text">
+            <p>The Gods brought you to a cave and took three rocks, which they bored holes in. The gods took a man's
+                entrails and bound you to the rocks with those entrails. Someone placed a serpent above you so the venom
+                of the serpent would fall on your face.</p>
+            <p>Your wife stayed with you in the cave. There, she held a dish to get the venom out of your face. When the
+                dish was full, she turned away to empty it. At such a moment, the venom dripped on your face. The pain
+                was so real that you screamed and writhed. People believed that the earth was shaken every time you
+                writhed.</p>
+        </div>
+        <button id="time-warp-continue" class="continue-btn">Continue</button>
+    </div>
     <div id="transition-overlay">
         <img src="bunny_speaking.png" alt="The Norn Bunny"
             style="width: 150px; height: 150px; margin-bottom: 20px; filter: drop-shadow(0 0 20px var(--gold)); animation: floating 3s ease-in-out infinite;">
         <h2 id="transition-realm-name" style="position: relative;">Entering the Void</h2>
-        <div id="game-splash-text" class="splash-text" style="font-size: 1.2rem; margin-top: -10px; position: static;">
-            Bunny :D</div>
+
         <p id="transition-realm-desc"
             style="color: #ccc; font-family: 'Cormorant Garamond'; font-style: italic; font-size: 1.4em; max-width: 600px; line-height: 1.6; margin-top: 10px;">
         </p>
         <p style="color: #666; font-family: 'Cinzel'; letter-spacing: 5px; margin-top: 20px;">The Norn Bunny
             Foretells...</p>
+        <button id="transition-continue" class="continue-btn">Continue</button>
     </div>
 
     <div id="death-screen">
@@ -101,19 +114,29 @@
         </div>
     </div>
 
+    <div id="shop-modal" class="modal">
+        <div class="modal-content"
+            style="width: 900px; height: 600px; border: none; background: transparent; padding: 0;">
+            <iframe id="shop-frame"
+                style="width: 100%; height: 100%; border: 2px solid var(--gold); border-radius: 8px;" src=""></iframe>
+        </div>
+    </div>
+
     <div id="cutscene-modal" class="modal" style="background: black; z-index: 2000; display: none;">
         <video id="cutscene-video" style="width: 100%; height: 100%; object-fit: contain;" playsinline></video>
     </div>
     <div id="mischief-modal" class="modal">
-        <div class="modal-content">
-            <h2>Cast an Illusion</h2>
-            <p id="mischief-target-info"></p>
-            <textarea id="mischief-input" placeholder="Type how you will confuse this foe..."></textarea>
-            <div class="modal-buttons">
-                <button id="mischief-submit" onclick="submitMischief()">Deceive</button>
-                <button onclick="closeMischief()">Withdraw</button>
+        <div class="modal-content" style="text-align: center;">
+            <h2 style="color: var(--gold); font-family: 'Cinzel';">Cast an Illusion</h2>
+            <p id="mischief-target-info" style="font-size: 1.1em; margin-bottom: 20px;"></p>
+            <div id="mischief-options-container"
+                style="display: flex; flex-direction: column; gap: 10px; width: 85%; margin: 0 auto; margin-bottom: 25px;">
             </div>
-            <div id="mischief-result" class="mischief-result"></div>
+            <div class="modal-buttons">
+                <button onclick="closeMischief()" style="background: #330000; border-color: #600;">Withdraw</button>
+            </div>
+            <div id="mischief-result" class="mischief-result"
+                style="margin-top: 20px; font-weight: bold; height: 1.5em;"></div>
         </div>
     </div>
     <div id="top-hud">
@@ -176,15 +199,15 @@
             </div>
         </div>
 
-        <!-- The Norn Bunny Prophecy Button -->
+        <!-- The Norn's Bazaar Shop Button -->
         <div
             style="position: absolute; right: 25px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; align-items: center; gap: 4px;">
-            <img src="bunny.png" alt="The Norn Bunny" onclick="showBunnyProphecy()"
+            <img src="bunny.png" alt="The Norn Bunny" onclick="openShop()"
                 style="height: 48px; width: 48px; border-radius: 50%; border: 2px solid var(--gold); background: rgba(5, 18, 8, 0.95); padding: 4px; box-shadow: 0 0 15px rgba(212, 175, 55, 0.4); cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);"
                 onmouseover="this.style.transform='scale(1.2) rotate(5deg)'; this.style.boxShadow='0 0 25px var(--gold)';"
-                onmouseout="this.style.transform='scale(1) rotate(0deg)';" title="Hear the Norn Bunny's Prophecy">
+                onmouseout="this.style.transform='scale(1) rotate(0deg)';" title="The Norn's Bazaar">
             <span
-                style="font-size: 0.55em; color: var(--gold); text-transform: uppercase; letter-spacing: 1px; font-weight: bold; font-family: 'Cinzel';">Prophecy</span>
+                style="font-size: 0.55em; color: var(--gold); text-transform: uppercase; letter-spacing: 1px; font-weight: bold; font-family: 'Cinzel';">Shop</span>
         </div>
     </div>
     <div class="ticker-container">
@@ -417,7 +440,7 @@
             const domain = email.split('@')[1];
 
             if (domain !== 'york.org') {
-                showNotification("Must be a @york.org email!");
+                alert("Must be a @york.org email!");
                 return;
             }
 
@@ -426,7 +449,7 @@
 
             // Logic: If it has numbers, it MUST end in 2030. If it doesn't end in 2030, it MUST NOT have numbers.
             if (hasNumbers && !isStudent) {
-                showNotification("Only 2030 student emails or staff (no numbers) allowed.");
+                alert("Only 2030 student emails allowed. (Checked by database)");
                 return;
             }
 
@@ -566,16 +589,25 @@
 
 
                 overlay.style.display = 'flex';
+                const continueBtn = document.getElementById('transition-continue');
+                overlay.classList.remove('show-content');
+                continueBtn.classList.remove('visible');
                 setTimeout(() => overlay.classList.add('active'), 50);
 
-                // Extended time to read the description
-                setTimeout(() => {
+                const resolveTransition = () => {
                     overlay.classList.remove('active');
                     setTimeout(() => {
                         overlay.style.display = 'none';
                         resolve();
                     }, 800);
-                }, 4000); // 4 seconds instead of 2
+                    continueBtn.removeEventListener('click', resolveTransition);
+                };
+
+                // Apply the same 4.5s logic for "continue" button appearance
+                setTimeout(() => {
+                    continueBtn.classList.add('visible');
+                    continueBtn.addEventListener('click', resolveTransition);
+                }, 4500);
             });
         }
 
@@ -597,6 +629,47 @@
             const currentStyle = realmStyles[realmName];
             showNotification(`The Norn Bunny whispers: You are in ${realmName} (Level ${level}). This realm is ${currentStyle.quirk}.`);
         };
+
+        window.openShop = function () {
+            const modal = document.getElementById('shop-modal');
+            const frame = document.getElementById('shop-frame');
+            frame.src = `shop/index.html?runes=${player.totalScore}`;
+            modal.style.display = 'flex';
+            isPaused = true;
+        };
+
+        window.closeShop = function () {
+            document.getElementById('shop-modal').style.display = 'none';
+            document.getElementById('shop-frame').src = '';
+            isPaused = false;
+            // Force focus back to game for controls
+            window.focus();
+            render();
+        };
+
+        // Close modals on click outside
+        window.addEventListener('click', (event) => {
+            const shopModal = document.getElementById('shop-modal');
+            if (event.target === shopModal) {
+                closeShop();
+            }
+            const mischiefModal = document.getElementById('mischief-modal');
+            if (event.target === mischiefModal) {
+                closeMischief();
+            }
+            const creditsModal = document.getElementById('credits-modal');
+            if (event.target === creditsModal) {
+                closeCredits();
+            }
+            const leaderboardModal = document.getElementById('leaderboard-modal');
+            if (event.target === leaderboardModal) {
+                closeLeaderboard();
+            }
+            const gatekeeperModal = document.getElementById('gatekeeper-modal');
+            if (event.target === gatekeeperModal) {
+                // Should probably not close gatekeeper by clicking outside as it's a trial
+            }
+        });
 
         async function nextLevel() {
             const realmName = realms[(level) % realms.length];
@@ -624,7 +697,7 @@
 
 
         function showDeathScreen(text) {
-            isGameOver = true;
+            text += "\nFun fact: Loki died while fighting Heimdall during Ragnarok."; isGameOver = true;
             isPaused = true;
             const screen = document.getElementById('death-screen');
             const msgEl = document.getElementById('death-msg');
@@ -996,7 +1069,7 @@
                     // HP Bar
                     ctx.fillStyle = "rgba(0,0,0,0.5)";
                     ctx.fillRect(e.x * TILE_SIZE, e.y * TILE_SIZE - 10, TILE_SIZE, 5);
-                    ctx.fillStyle = e.confused ? "#00ff41" : "#ff0000";
+                    ctx.fillStyle = e.isAlly ? "#00d4ff" : (e.confused ? "#00ff41" : "#ff0000");
                     if (e.type === 'boss') ctx.fillStyle = "#aa00ff";
                     ctx.fillRect(e.x * TILE_SIZE, e.y * TILE_SIZE - 10, (e.health / e.maxHealth) * TILE_SIZE, 5);
 
@@ -1007,6 +1080,11 @@
                     if (e.confused) {
                         ctx.fillStyle = "#00ff41";
                         ctx.fillText("?", e.x * TILE_SIZE + TILE_SIZE / 2, e.y * TILE_SIZE + TILE_SIZE / 2);
+                    }
+                    if (e.isAlly) {
+                        ctx.fillStyle = "#00d4ff";
+                        ctx.font = "bold 12px Cinzel";
+                        ctx.fillText("ALLY", e.x * TILE_SIZE, e.y * TILE_SIZE - 20);
                     }
                 });
 
@@ -1072,8 +1150,8 @@
 
                 const mischiefEl = document.getElementById('mischief-status');
                 if (mischiefEl) {
-                    mischiefEl.textContent = mischiefUsed ? "0" : "1";
-                    if (mischiefUsed) {
+                    mischiefEl.textContent = player.mischiefCharges;
+                    if (player.mischiefCharges <= 0) {
                         mischiefEl.style.color = "#ff4141";
                         mischiefEl.classList.remove('ready-pulse');
                     } else {
@@ -1102,9 +1180,58 @@
             }
         }
 
+        function triggerTimeWarp() {
+            const overlay = document.getElementById('time-warp-overlay');
+            const continueBtn = document.getElementById('time-warp-continue');
+            if (!overlay || !continueBtn) return;
+
+            overlay.classList.add('active');
+            document.body.classList.add('vibrate-container');
+            continueBtn.classList.remove('visible');
+
+            // Randomly shake the earth for 2 seconds
+            const shake = setInterval(() => {
+                triggerShake(20);
+            }, 100);
+
+            setTimeout(() => {
+                clearInterval(shake);
+                document.body.classList.remove('vibrate-container');
+            }, 2000);
+
+            const resolveWarp = () => {
+                overlay.classList.remove('active');
+                continueBtn.removeEventListener('click', resolveWarp);
+            };
+
+            // Only allow continue after 4.5 seconds
+            setTimeout(() => {
+                continueBtn.classList.add('visible');
+                continueBtn.addEventListener('click', resolveWarp);
+            }, 4500);
+        }
+
+
         // --- ENEMY AI ---
         function processEnemyTurns() {
             enemies.forEach(enemy => {
+                if (enemy.isAlly) {
+                    // Allies follow player
+                    const dx = player.x - enemy.x;
+                    const dy = player.y - enemy.y;
+                    if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
+                        let stepX = enemy.x + (dx !== 0 ? Math.sign(dx) : 0);
+                        let stepY = enemy.y + (dy !== 0 ? Math.sign(dy) : 0);
+                        // Only move if not blocked
+                        const isWall = map[stepY] && map[stepY][stepX] === wallChar;
+                        const isOtherEnemy = enemies.some(e => e !== enemy && e.x === stepX && e.y === stepY);
+                        if (!isWall && !isOtherEnemy) {
+                            enemy.x = stepX;
+                            enemy.y = stepY;
+                        }
+                    }
+                    return;
+                }
                 if (enemy.confused) {
                     // Confused enemies might skip turn or move randomly even more
                     if (Math.random() > 0.5) return;
@@ -1155,11 +1282,10 @@
 
         // --- MISCHIEF SYSTEM ---
         let currentTarget = null;
-        let mischiefUsed = false;
 
-        function openMischief() {
-            if (mischiefUsed) {
-                showNotification("Your trickery is exhausted for this realm. Wait for the next.");
+        async function openMischief() {
+            if (player.mischiefCharges <= 0) {
+                showNotification("Your trickery is exhausted. Visit the Norn's Bazaar to acquire more.");
                 return;
             }
 
@@ -1168,7 +1294,7 @@
             let minDist = Infinity;
             enemies.forEach(e => {
                 const dist = Math.sqrt(Math.pow(player.x - e.x, 2) + Math.pow(player.y - e.y, 2));
-                if (dist < minDist && dist < 3) {
+                if (dist < minDist && dist < 3 && !e.isAlly) {
                     minDist = dist;
                     closest = e;
                 }
@@ -1181,14 +1307,40 @@
 
             currentTarget = closest;
 
-            // FIX STARTS HERE:
             const modal = document.getElementById('mischief-modal');
+            const optionsContainer = document.getElementById('mischief-options-container');
+            const resultEl = document.getElementById('mischief-result');
+
             if (modal) {
                 modal.style.display = 'flex';
                 document.getElementById('mischief-target-info').textContent = `Target: Lvl ${currentTarget.level} Foe`;
-                document.getElementById('mischief-input').value = '';
-                document.getElementById('mischief-result').textContent = '';
+                resultEl.textContent = '';
+                optionsContainer.innerHTML = "<p style='color: var(--gold);'>Seeking trickster's inspiration...</p>";
                 isPaused = true;
+
+                try {
+                    const response = await fetch('questions/mischief.json');
+                    const options = await response.json();
+
+                    // Shuffle and pick 4
+                    const shuffled = options.sort(() => 0.5 - Math.random());
+                    const selected = shuffled.slice(0, 4);
+
+                    optionsContainer.innerHTML = "";
+                    selected.forEach(opt => {
+                        const btn = document.createElement('button');
+                        btn.textContent = opt;
+                        btn.className = "gate-option-btn";
+                        btn.style = "padding: 12px; background: rgba(0,0,0,0.6); color: white; border: 1px solid var(--gold); cursor: pointer; font-family: 'Cinzel'; font-size: 0.9em; text-align: center; width: 100%; transition: all 0.2s;";
+                        btn.onmouseover = () => { btn.style.background = "rgba(212, 175, 55, 0.2)"; };
+                        btn.onmouseout = () => { btn.style.background = "rgba(0,0,0,0.6)"; };
+                        btn.onclick = () => window.executeMischief(opt);
+                        optionsContainer.appendChild(btn);
+                    });
+                } catch (err) {
+                    console.error("Failed to load mischief options:", err);
+                    optionsContainer.innerHTML = "<p style='color: #ff4141;'>The Void is silent. Trickery failed.</p>";
+                }
             } else {
                 console.error("Could not find mischief-modal element!");
             }
@@ -1200,52 +1352,60 @@
             render();
         }
 
-        window.submitMischief = async function () {
-            const text = document.getElementById('mischief-input').value;
-            if (!text.trim()) return;
-
+        window.executeMischief = async function (choice) {
             const resultEl = document.getElementById('mischief-result');
-            resultEl.textContent = "Judging your deception...";
+            const optionsContainer = document.getElementById('mischief-options-container');
 
-            try {
-                const res = await fetch(
-                    "https://loki.veerbajaj11.workers.dev/mischief",
-                    {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            text,
-                            level,
-                            enemyLevel: currentTarget.level
-                        })
+            // Disable all buttons to prevent double-click
+            Array.from(optionsContainer.getElementsByTagName('button')).forEach(b => {
+                b.disabled = true;
+                b.style.opacity = "0.5";
+                b.style.cursor = "default";
+            });
+
+            resultEl.textContent = "The Norn Bunny decides your fate...";
+            resultEl.style.color = "var(--gold)";
+
+            // 75% success rate for mischief
+            const success = Math.random() > 0.25;
+
+            setTimeout(() => {
+                if (success) {
+                    if (currentTarget.level === 1) {
+                        resultEl.textContent = "Loki cackles - the level 1 foe is now your ally!";
+                        resultEl.style.color = "#00ff41";
+                        currentTarget.isAlly = true;
+                        currentTarget.confused = false;
+                        currentTarget.damage = Math.floor(currentTarget.damage * 1.5); // Allies hit harder
+                        showNotification("Enemy Tamed! They will follow you and aid in 3D combat.");
+                    } else {
+                        resultEl.textContent = "Loki's trick is lethal! The level 2+ foe perishes!";
+                        resultEl.style.color = "#00ff41";
+                        const idx = enemies.indexOf(currentTarget);
+                        if (idx !== -1) enemies.splice(idx, 1);
+                        player.totalScore += 150;
                     }
-                );
-
-                const data = await res.json();
-                console.log("Mischief Response:", data);
-                if (data.success) {
-                    resultEl.textContent = "Loki cackles - your mischief succeeds!";
-                    resultEl.style.color = "#00ff41";
-                    currentTarget.confused = true;
-                    currentTarget.damage = Math.max(1, Math.floor(currentTarget.damage * 0.6));
                 } else {
-                    resultEl.textContent = "Loki sees through your ruse... failure.";
+                    resultEl.textContent = "The trick backfires! The foe is enraged!";
                     resultEl.style.color = "#ff4141";
+                    currentTarget.damage = Math.floor(currentTarget.damage * 1.5);
+
+                    // Dock 90 health and trigger Time Warp
+                    player.health -= 90;
+                    if (player.health < 0) player.health = 0;
+                    document.getElementById('health-text').textContent = player.health;
+                    triggerTimeWarp();
+                    showNotification("The venom of the trickery falls upon you! -90 HP");
                 }
 
-                mischiefUsed = true;
+                player.mischiefCharges--;
 
                 setTimeout(() => {
                     closeMischief();
                     processEnemyTurns();
                     render();
                 }, 1500);
-
-            } catch (err) {
-                resultEl.textContent = "The trick fizzles in chaos...";
-                resultEl.style.color = "#ff4141";
-                console.error(err);
-            }
+            }, 1000);
         }
         window.openCredits = function () {
             document.getElementById('credits-modal').style.display = 'flex';
@@ -1271,7 +1431,52 @@
                 player.health = event.data.health;
                 render();
             }
+
+            if (event.data.type === 'buy-swords') {
+                player.totalScore -= event.data.price;
+                player.weaponDurability += 10;
+                player.hasWeapon = true;
+                showNotification("Acquired 10 Daggers!");
+                updateShopRunes();
+                render();
+            }
+
+            if (event.data.type === 'buy-mischief') {
+                player.totalScore -= event.data.price;
+                player.mischiefCharges += 2;
+                showNotification("Acquired 2 Mischief Charges!");
+                updateShopRunes();
+                render();
+            }
+
+            if (event.data.type === 'buy-potion') {
+                player.totalScore -= event.data.price;
+                player.health = 100;
+                showNotification("Restored Health!");
+                playCutscene('scene/health.mp4');
+                updateShopRunes();
+                render();
+            }
+
+            if (event.data.type === 'buy-campout') {
+                player.totalScore -= event.data.price;
+                player.campOutCharges += 1;
+                showNotification("Acquired Camping Supplies!");
+                updateShopRunes();
+                render();
+            }
+
+            if (event.data.type === 'buy-prophecy') {
+                showBunnyProphecy();
+            }
         });
+
+        function updateShopRunes() {
+            const frame = document.getElementById('shop-frame');
+            if (frame && frame.contentWindow) {
+                frame.contentWindow.postMessage({ type: 'update-runes', runes: player.totalScore }, '*');
+            }
+        }
 
         function startCombat(enemyIndex) {
             if (player.weaponDurability <= 0) return;
@@ -1284,7 +1489,9 @@
 
             // Pass stats to 3D fight
             // current health, damage, and image params
-            frame.src = `3D/index.html?hp=${enemy.health}&dmg=${enemy.damage}&img=${enemy.img}&playerHP=${player.health}`;
+            const ally = enemies.find(e => e.isAlly);
+            const allyParam = ally ? `&allyImg=${ally.img}&allyDmg=${ally.damage}` : "";
+            frame.src = `3D/index.html?hp=${enemy.health}&dmg=${enemy.damage}&img=${enemy.img}&playerHP=${player.health}${allyParam}`;
 
             // Ensure focus for interaction
             frame.onload = () => {
@@ -1337,7 +1544,6 @@
         function startLevel() {
             console.log("Starting Level:", level);
             isGameOver = false;
-            mischiefUsed = false;
             const width = 13 + (level * 2);
             const height = 9 + (level * 2);
             console.log("Maze dimensions:", width, "x", height);
@@ -1351,6 +1557,7 @@
                 weaponDurability: player.weaponDurability || 0,
                 spaceStones: player.spaceStones || 0,
                 portals: player.portals || 0,
+                mischiefCharges: player.mischiefCharges === undefined ? 1 : player.mischiefCharges,
                 campOutCharges: 3,
                 isInvulnerable: false
             };
@@ -1363,6 +1570,13 @@
         }
 
         document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                if (document.getElementById('shop-modal').style.display === 'flex') closeShop();
+                if (document.getElementById('mischief-modal').style.display === 'flex') closeMischief();
+                if (document.getElementById('credits-modal').style.display === 'flex') closeCredits();
+                if (document.getElementById('leaderboard-modal').style.display === 'flex') closeLeaderboard();
+            }
+
             if (isGameOver || isPaused) return;
 
             let newX = player.x;
@@ -1397,7 +1611,7 @@
                         const enemy = enemies[i];
                         const dx = Math.abs(player.x - enemy.x);
                         const dy = Math.abs(player.y - enemy.y);
-                        if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
+                        if (((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) && !enemy.isAlly) {
                             targetIdx = i;
                             break;
                         }
@@ -1417,7 +1631,7 @@
             }
             event.preventDefault();
 
-            const isEnemy = enemies.some(e => e.x === newX && e.y === newY);
+            const isEnemy = enemies.some(e => e.x === newX && e.y === newY && !e.isAlly);
             if (map[newY] && map[newY][newX] !== wallChar && !isEnemy) {
                 const dx = newX - player.x;
                 const dy = newY - player.y;
@@ -1425,8 +1639,8 @@
                 player.x = newX;
                 player.y = newY;
 
-                // Jotunheim Ice Quirk: Slide removed per user request to fix '2 block move' bug
-                // If you want to re-implement, use a while loop for a full slide until wall.
+                // Jotunheim Ice Quirk: Slide removed per Alex's request to fix 2 block move bug
+                // If you want to re-implement, use a while loop for a full slide until wall. (AI)
 
                 // Handle running animation
                 if (playerAction && (key === 'w' || key === 's' || key === 'a' || key === 'd')) {
@@ -1564,8 +1778,14 @@
                 } else {
                     feedbackEl.textContent = "Incorrect. The Bifrost remains closed.";
                     feedbackEl.style.color = "#ff4141";
-                    player.health -= 5;
+
+                    // Dock 50 health and trigger Time Warp
+                    player.health -= 50;
+                    if (player.health < 0) player.health = 0;
                     document.getElementById('health-text').textContent = player.health;
+                    triggerTimeWarp();
+                    showNotification("The Gatekeeper's wrath shakes the earth! -50 HP");
+
                     if (player.health <= 0) {
                         player.health = 0;
                         playCutscene('scene/death.mp4', () => {

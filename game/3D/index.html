@@ -217,11 +217,37 @@
             }
         }
 
+        // --- ALLY ---
+        const allyImgSrc = urlParams.get('allyImg');
+        const allyDmg = parseInt(urlParams.get('allyDmg')) || 5;
+        let allySprite = null;
+
+        if (allyImgSrc) {
+            const allyTexture = textureLoader.load('../' + allyImgSrc);
+            allyTexture.magFilter = THREE.NearestFilter;
+            const allyMaterial = new THREE.SpriteMaterial({ map: allyTexture });
+            allySprite = new THREE.Sprite(allyMaterial);
+            allySprite.scale.set(2, 2, 1);
+            allySprite.position.set(-2, 1.2, 3); // Positioned to the side and slightly front
+            scene.add(allySprite);
+        }
+
         // --- ENEMY AI LOOP ---
         function updateEnemyAI() {
             if (!isFighting || enemyHP <= 0) return;
 
             const now = Date.now();
+
+            // Ally helps!
+            if (allySprite && Math.random() < 0.01) {
+                const damage = Math.floor(allyDmg / 2);
+                enemyHP -= damage;
+                document.getElementById('enemy-hp').textContent = enemyHP;
+                enemy.material.color.set(0x00d4ff); // Ally hit color
+                setTimeout(() => enemy.material.color.set(0xffffff), 100);
+                showMessage("ALLY ATTACKED!", "#00d4ff");
+                if (enemyHP <= 0) endFight(true);
+            }
 
             // AI State Machine
             if (enemyState === 'IDLE') {
