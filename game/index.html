@@ -584,7 +584,7 @@
             "Midgard": { wall: '#0a210f', floor: '#061208', border: '#0e2e15', quirk: 'Lucky (Bonus Runes)' },
             "Alfheim": { wall: '#f0f4f8', floor: '#061208', border: '#a5b1c2', quirk: 'Radiant (High Visibility)' },
             "Asgard": { wall: '#d4af37', floor: '#061208', border: '#8c6d1f', quirk: 'Armory (Extra Daggers)' },
-            "Jotunheim": { wall: '#00d4ff', floor: '#061208', border: '#0099cc', quirk: 'Slippery (Ice Slide)' },
+            "Jotunheim": { wall: '#00d4ff', floor: '#061208', border: '#0099cc', quirk: 'Frozen (Ancient Giants)' },
             "Vanaheim": { wall: '#004d26', floor: '#061208', border: '#003319', quirk: 'Mystical (Extra Potions)' },
             "Nidavellir": { wall: '#3d3d3d', floor: '#061208', border: '#262626', quirk: 'Hardened (Durable Daggers)' },
             "Muspelheim": { wall: '#ff4141', floor: '#061208', border: '#800000', quirk: 'Inferno (Swarms)' },
@@ -1044,16 +1044,9 @@
 
                 // Realm Effects
                 if (realmName === "Helheim") {
-                    drawVignette(2, 6, 0.95);
+                    drawVignette(2, 6, 0.98); // Blindness effect
                 } else if (realmName === "Niflheim") {
-                    drawVignette(4, 10, 0.7);
-                }
-
-                // Realm Effects
-                if (realmName === "Helheim") {
-                    drawVignette(2, 6, 0.98); // Thicker blindness
-                } else if (realmName === "Niflheim") {
-                    drawVignette(4, 10, 0.7);
+                    drawVignette(4, 10, 0.7); // Mist effect
                 }
 
                 document.getElementById('level-text').textContent = `${realmName} (${level})`;
@@ -1432,20 +1425,8 @@
                 player.x = newX;
                 player.y = newY;
 
-                // Jotunheim Ice Quirk: Slide if moving on ice
-                const realmName = realms[(level - 1) % realms.length];
-                if (realmName === "Jotunheim") {
-                    let nextSlideX = player.x + dx;
-                    let nextSlideY = player.y + dy;
-                    const isSlideWall = map[nextSlideY] && map[nextSlideY][nextSlideX] === wallChar;
-                    const isSlideEnemy = enemies.some(e => e.x === nextSlideX && e.y === nextSlideY);
-                    const isSlideExit = map[nextSlideY] && map[nextSlideY][nextSlideX] === exitChar;
-
-                    if (map[nextSlideY] && !isSlideWall && !isSlideEnemy && !isSlideExit) {
-                        player.x = nextSlideX;
-                        player.y = nextSlideY;
-                    }
-                }
+                // Jotunheim Ice Quirk: Slide removed per user request to fix '2 block move' bug
+                // If you want to re-implement, use a while loop for a full slide until wall.
 
                 // Handle running animation
                 if (playerAction && (key === 'w' || key === 's' || key === 'a' || key === 'd')) {
